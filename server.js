@@ -1,7 +1,3 @@
-// server.js
-
-// BASE SETUP
-// =============================================================================
 
 // call the packages we need
 var express = require('express');        // call express
@@ -29,31 +25,15 @@ var port = process.env.PORT || 8080;        // set our port
 // =============================================================================
 var router = express.Router();              // get an instance of the express Router
 
-// test route to make sure everything is working (accessed at GET http://localhost:8080/api)
 router.get('/', function (req, res) {
     res.json({ message: 'hooray! welcome to our api!' });
 });
-
-// more routes for our API will happen here
 
 router.route('/trips')
 
     .post(function (req, res) {
 
-        var trip = new Trip();
-
-        trip.startingAdress = req.body.startingAdress;
-        trip.endingAdress = req.body.endingAdress;
-        trip.numberOfSeatsAvailable = req.body.numberOfSeatsAvailable;
-        trip.tripDate = req.body.tripDate;
-        trip.driver = req.body.driver;
-        trip.departure = req.body.departure;
-        trip.passengers = req.body.passengers;
-        trip.status = req.body.status;
-        trip.tripDate = req.body.tripDate;
-        trip.stoppingAdresses = req.body.stoppingAdresses;
-        trip.auto_accept = req.body.auto_accept;
-        trip.pendingPassengers = req.body.pendingPassengers;
+        var trip = new Trip(req.body);
 
         trip.save(function (err) {
             if (err) {
@@ -111,14 +91,10 @@ router.put('/trips/:id_trip/add_passenger', (req, res) => {
                 }
                 res.status(200).json(trip);
             });
-
         } else {
             res.status(202).send("Car has no seats available.");
         }
     });
-
-
-
 
 });
 
