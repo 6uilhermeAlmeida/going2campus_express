@@ -1,7 +1,8 @@
 var mongoose     = require('mongoose');
 var Schema       = mongoose.Schema;
 
-var TripSchema   = new Schema({
+var TripSchema   = new Schema(
+    {
 
     startingAdress: String,
     endingAdress: String,
@@ -13,7 +14,10 @@ var TripSchema   = new Schema({
     status: Number,
     stoppingAdresses:[String],
     auto_accept: Boolean,
-    pendingPassengers:[String]},
+    pendingPassengers:[String]
+    
+    },
+
     {timestamps: true}
 );
 
