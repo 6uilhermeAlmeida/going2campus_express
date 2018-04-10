@@ -17,7 +17,7 @@ router.route('/')
 
             res.status(200).json(trip);
 
-        })
+        });
 
     })
 
@@ -31,7 +31,7 @@ router.route('/')
 
             res.json(trips);
 
-        })
+        });
 
     });
 
