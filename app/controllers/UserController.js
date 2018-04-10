@@ -38,7 +38,7 @@ router.post('/', function (req, res) {
             if (err) {
                 res.status(400).json({
                     success: false,
-                    message: err
+                    message: "Error saving user to the database."
                 });
                 return;
             }
