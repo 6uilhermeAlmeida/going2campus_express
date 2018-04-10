@@ -36,10 +36,25 @@ router.post('/', function (req, res) {
         function (err, user) {
 
             if (err) {
+
+                var errors = [];
+                
+                if (err.errors) {
+                    User.schema.eachPath(function (eachPath) {
+                        if (err.errors[eachPath]) {
+                            errors.push({error_message:err.errors[eachPath].message});
+                        }
+                    });
+                }
+
+                if (err.code == 11000) {
+                    errors.push({error_message:"There's a user with this e-mail already."});
+                }
+
                 res.status(400).json({
-                    success: false,
-                    message: "Error saving user to the database."
+                    errors: errors
                 });
+
                 return;
             }
 
