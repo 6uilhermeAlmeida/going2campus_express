@@ -21,31 +21,6 @@ router.get('/', function (req, res) {
     })
 });
 
-router.post('/', function (req, res) {
 
-    User.create(
-
-        {
-            name: req.body.name,
-            mail: req.body.mail,
-            password: bcrypt.hashSync(req.body.password),
-            birthDate: req.body.birthDate
-
-        },
-
-        function (err, user) {
-
-            if (err) {
-                res.status(400).json({
-                    success: false,
-                    message: err
-                });
-                return;
-            }
-
-            user.password = undefined;
-            res.status(201).json(user);
-        });
-});
 
 module.exports = router;

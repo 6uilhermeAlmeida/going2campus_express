@@ -8,6 +8,7 @@ var mongoose = require('mongoose');
 
 var TripController = require('./app/controllers/TripController');
 var UserController = require('./app/controllers/UserController');
+var AuthController = require('./app/controllers/AuthController');
 var config = require('./app/config/config.js');
 
 mongoose.connect(config.database);
@@ -30,6 +31,7 @@ var port = process.env.PORT || 8080;        // set our port
 // REGISTER OUR ROUTES -------------------------------
 app.use('/api/trips', TripController);
 app.use('/api/users', UserController);
+app.use('/api/auth', AuthController);
 
 
 app.listen(port);
