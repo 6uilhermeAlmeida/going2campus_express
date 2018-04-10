@@ -6,8 +6,10 @@ var bodyParser = require('body-parser');
 var mongoose = require('mongoose');
 var Trip = require('./app/models/trip');
 var TripController = require('./app/controllers/TripController');
+var UserController = require('./app/controllers/UserController');
+var config = require('./app/config/config.js');
 
-mongoose.connect('mongodb://dev:dev@ds223578.mlab.com:23578/going2campus');
+mongoose.connect(config.database);
 mongoose.connection
     .once('open', () => console.log('Good to go!'))
     .on('error', (error) => {
@@ -22,15 +24,12 @@ app.use(bodyParser.json());
 
 var port = process.env.PORT || 8080;        // set our port
 
-// ROUTES FOR OUR API
-// =============================================================================
 
 
 // REGISTER OUR ROUTES -------------------------------
-// all of our routes will be prefixed with /api
 app.use('/api/trips', TripController);
+app.use('/api/users', UserController);
 
-// START THE SERVER
-// =============================================================================
+
 app.listen(port);
 console.log('Magic happens on port ' + port);
