@@ -4,7 +4,8 @@ var express = require('express');        // call express
 var app = express();                 // define our app using express
 var bodyParser = require('body-parser');
 var mongoose = require('mongoose');
-var Trip = require('./app/models/trip');
+
+
 var TripController = require('./app/controllers/TripController');
 var UserController = require('./app/controllers/UserController');
 var config = require('./app/config/config.js');
