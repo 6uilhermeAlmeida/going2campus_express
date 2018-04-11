@@ -26,12 +26,17 @@ app.use(bodyParser.json());
 
 var port = process.env.PORT || 8080;        // set our port
 
+app.get('/api/doc', function (req, res) {
+    res.sendfile('./doc/output.html');
+});
 
 
 // REGISTER OUR ROUTES -------------------------------
 app.use('/api/trips', TripController);
 app.use('/api/users', UserController);
 app.use('/api/auth', AuthController);
+
+
 
 
 app.listen(port);
