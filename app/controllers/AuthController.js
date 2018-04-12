@@ -51,7 +51,7 @@ router.post('/register', function (req, res) {
 
 
 router.post('/login', (req, res) => {
-    User.findOne({ mail: req.body.mail }, function (err, user) {
+    User.findOne({ mail: req.body.mail }).select('+password').exec(function (err, user) {
         if (err) return res.status(500).send('Error on the server.');
         if (!user) return res.status(404).send('No user found.');
     
