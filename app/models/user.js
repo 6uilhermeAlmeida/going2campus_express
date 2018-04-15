@@ -20,7 +20,8 @@ var UserSchema = new Schema({
         photo_url: String,
         cancel_index: {type : Number, default : 0},
         trips: {type: [String], select : false},
-        admin: {type : Boolean, default : false}
+        admin: {type : Boolean, default : false},
+        cancel_counter: {type : Number, default : 0}
     },
 
     {
