@@ -7,6 +7,7 @@ var TripSchema = new Schema({
         endingAdress: String,
         numberOfSeatsAvailable: Number,
         tripDate: Date,
+        duration: Number,
         driver: String,
         departure: Boolean,
         passengers: [String],

@@ -1,5 +1,6 @@
 var jwt = require('jsonwebtoken');
 var config = require('../config/config.js');
+var User = require('../models/user');
 
 function verifyToken(req, res, next) {
   
@@ -15,7 +16,16 @@ function verifyToken(req, res, next) {
     }
 
     req.userId = decoded.id;
-    next();
+    req.admin_token = decoded.admin_token;
+
+    User.findById(req.userId, function (err, user) {
+      
+      if (err) return res.status(503).json({message : "We can´t know if you are a user or not."});
+      if (!user) return res.status(403).json({message : "You are no longer a user, register to join us again!"});
+      
+      next();
+    })
+
   });
 }
 

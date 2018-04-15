@@ -24,17 +24,17 @@ router.post('/register', function (req, res) {
             if (err) {
 
                 var errors = [];
-                
+
                 if (err.errors) {
                     User.schema.eachPath(function (eachPath) {
                         if (err.errors[eachPath]) {
-                            errors.push({error_message:err.errors[eachPath].message});
+                            errors.push({ error_message: err.errors[eachPath].message });
                         }
                     });
                 }
 
                 if (err.code == 11000) {
-                    errors.push({error_message:"There's a user with this e-mail already."});
+                    errors.push({ error_message: "There's a user with this e-mail already." });
                 }
 
                 res.status(400).json({
@@ -54,16 +54,16 @@ router.post('/login', (req, res) => {
     User.findOne({ mail: req.body.mail }).select('+password').exec(function (err, user) {
         if (err) return res.status(500).send('Error on the server.');
         if (!user) return res.status(404).send('No user found.');
-    
+
         var passwordIsValid = bcrypt.compareSync(req.body.password, user.password);
         if (!passwordIsValid) return res.status(401).send({ auth: false, token: null, message: "Invalid password" });
-    
-        var token = jwt.sign({ id: user._id }, config.secret, {
-          expiresIn: 2628000 // one month in seconds
+
+        var token = jwt.sign({ id: user._id, admin_token: user.admin }, config.secret, {
+            expiresIn: 2628000 // one month in seconds
         });
-    
-        res.status(200).send({ auth: true, token: token});
-      });
+
+        res.status(200).send({ auth: true, token: token });
+    });
 });
 
 module.exports = router;

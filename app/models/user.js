@@ -19,7 +19,8 @@ var UserSchema = new Schema({
         birthDate: {type : Date, required : true},
         photo_url: String,
         cancel_index: {type : Number, default : 0},
-        trips: [String],
+        trips: {type: [String], select : false},
+        admin: {type : Boolean, default : false}
     },
 
     {
