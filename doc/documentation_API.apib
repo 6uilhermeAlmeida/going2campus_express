@@ -1,0 +1,25 @@
+FORMAT: 1A
+
+# Going2Campus API documentation
+
+This is the documentation for our car-sharing API, Going2Campus.
+
+# Group Users
+
+## User Collection [/users]
+
+### Get All Users [GET /users]
++ Response 200 (application/json)
+    + Attributes
+        - users (array[User])
+        
+# Data Structures
+
+## User(object)
+- mail: user@ipl.com (string) - The user's e-mail
+- name: José Milho (string) - The user's name
+- rating: 5 (number) - The user's rating (0-5)
+- numberOfRates: 420 (number) - How many rates the user has been given
+- preferences: talker, smoker (array[string]) - User's preferences being the driver
+- birthDate: `1997-09-08T23:00:00.000Z` (string) - User's date of birth
+- cancel_index: 0.1 (number) - How often this user cancels a trip
