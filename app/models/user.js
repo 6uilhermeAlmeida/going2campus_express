@@ -17,11 +17,11 @@ var UserSchema = new Schema({
         numberOfRates: {type : Number, default : 0},
         preferences: [String],
         birthDate: {type : Date, required : true},
-        photo_url: String,
-        cancel_index: {type : Number, default : 0},
+        photoUrl: String,
+        cancelIndex: {type : Number, default : 0},
         trips: {type: [String], select : false},
         admin: {type : Boolean, default : false},
-        cancel_counter: {type : Number, default : 0}
+        cancelCounter: {type : Number, default : 0}
     },
 
     {

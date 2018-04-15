@@ -37,7 +37,7 @@ router.get('/me', function (req, res, next) {
 
 });
 
-router.delete('/:id_user/nuke', function (req, res, next) {
+router.delete('/:id_user', function (req, res, next) {
     
 
     if (!req.admin_token) {
