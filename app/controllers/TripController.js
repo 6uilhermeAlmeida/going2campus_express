@@ -3,6 +3,8 @@ var express = require('express');        // call express
 var Trip = require('../models/trip');
 var router = express.Router();              // get an instance of the express Router
 var verifyToken = require('../auth/VerifyToken.js');
+var User = require('../models/user');
+
 
 router.route('/')
 
@@ -41,12 +43,26 @@ router.route('/')
 
 router.put('/:id_trip/add_passenger', (req, res) => {
 
+
     if (!req.body.passengerId) {
         res.status(400).send("Bad request, wrong attribute name.");
         return;
     }
 
-    Trip.findById(req.params.id_trip, function (err, trip) {
+
+    User.findById(req.body.passengerId, function (err, user) {
+
+        if (err) {
+            return res.status(503).json({ message: "We can't know if you are a user or not." });
+        }
+
+        if (!user) {
+            return res.status(404).json({ message: "This user does not exist." });
+        }
+
+    });
+
+    Trip.findById(req.params.id_trip).populate("driver").exec(function (err, trip) {
 
         if (err) {
             console.log(err);
@@ -59,7 +75,20 @@ router.put('/:id_trip/add_passenger', (req, res) => {
             return;
         }
 
+
+        if (trip.driver.id == req.body.passengerId) {
+            return res.status(409).json({ message: "The user you tried to add is the driver of the trip." });
+        }
+
+
+        if (trip.pendingPassengers.indexOf(req.body.passengerId) < 0 || trip.passengers.indexOf(req.body.passengerId) < 0) {
+            return res.status(409).json({ message: "This user is already listed for this trip." });
+        }
+
+
+
         if (trip.numberOfSeatsAvailable > 0) {
+
             if (trip.auto_accept) {
                 trip.passengers.push(req.body.passengerId);
                 trip.numberOfSeatsAvailable--;
@@ -75,6 +104,7 @@ router.put('/:id_trip/add_passenger', (req, res) => {
                 }
                 res.status(200).json(trip);
             });
+
         } else {
             res.status(202).json({ message: "Car has no seats available." });
         }
@@ -82,14 +112,26 @@ router.put('/:id_trip/add_passenger', (req, res) => {
 
 });
 
-router.put('/:id_trip/accept_passenger',verifyToken, (req, res) => {
+router.put('/:id_trip/accept_passenger', verifyToken, (req, res) => {
 
     if (!req.body.passengerId) {
         res.status(400).send("Bad request, wrong attribute name.");
         return;
     }
 
-    Trip.findById(req.params.id_trip).populate("driver").exec( function (err, trip) {
+    User.findById(req.body.passengerId, function (err, user) {
+
+        if (err) {
+            return res.status(503).json({ message: "We can't know if you are a user or not." });
+        }
+
+        if (!user) {
+            return res.status(404).json({ message: "This user does not exist." });
+        }
+
+    });
+
+    Trip.findById(req.params.id_trip).populate("driver").exec(function (err, trip) {
 
         if (err) {
             console.log(err);
@@ -101,31 +143,31 @@ router.put('/:id_trip/accept_passenger',verifyToken, (req, res) => {
         }
 
         if (trip.driver.id != req.token_user_id) {
-            return res.status(403).json({message:"Unauthorized Request"});
+            return res.status(403).json({ message: "Unauthorized Request" });
         }
 
         if (trip.numberOfSeatsAvailable > 0) {
-                let index  = trip.pendingPassengers.indexOf(req.body.passengerId);
-                if (index > -1) {
-                    trip.pendingPassengers.splice(index, 1);
-                    trip.passengers.push(req.body.passengerId);
-                    trip.numberOfSeatsAvailable--;
+            let index = trip.pendingPassengers.indexOf(req.body.passengerId);
+            if (index > -1) {
+                trip.pendingPassengers.splice(index, 1);
+                trip.passengers.push(req.body.passengerId);
+                trip.numberOfSeatsAvailable--;
 
-                    trip.save(function (err) {
-                        if (err) {
-                            console.log(err);
-                            res.status(503).send("Error saving data to database.");
-                            return;
-                        }
-                        res.status(200).json(trip);
-                    });
-                }
-                else{
-                    res.status(409).json({ message: "User did not reserve this trip." });
-                }
-            } else {
-                res.status(202).json({ message: "Car has no seats available." });
+                trip.save(function (err) {
+                    if (err) {
+                        console.log(err);
+                        res.status(503).send("Error saving data to database.");
+                        return;
+                    }
+                    res.status(200).json(trip);
+                });
             }
+            else {
+                res.status(409).json({ message: "User did not reserve this trip." });
+            }
+        } else {
+            res.status(202).json({ message: "Car has no seats available." });
+        }
     });
 
 });
