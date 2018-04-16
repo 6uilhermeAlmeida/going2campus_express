@@ -26,7 +26,7 @@ router.get('/', function (req, res) {
 
 router.get('/me', function (req, res, next) {
 
-    User.findById(req.userId, { password: 0 }, function (err, user) {
+    User.findById(req.token_user_id, function (err, user) {
 
         if (err) return res.status(500).send("There was a problem finding the user.");
 
@@ -38,30 +38,29 @@ router.get('/me', function (req, res, next) {
 });
 
 router.delete('/:id_user', function (req, res, next) {
-    
 
-    if (!req.admin_token) {
-         return res.status(403).json({message : "Unauthorized request"});
+
+    if (!req.token_admin && (req.params.id_user != req.token_user_id)) {
+        return res.status(403).json({ message: "Unauthorized request" });
     }
 
     User.findById(req.params.id_user, function (err, user) {
-        
+
         if (err) {
-            return res.status(503).json({message : "Could not retrieve the user."});
+            return res.status(503).json({ message: "Could not retrieve the user." });
         }
 
         if (!user) {
-            return res.status(404).json({message : "User not found."});
+            return res.status(404).json({ message: "User not found." });
         }
 
         user.remove(function (err, user) {
 
             if (err) {
-                 return res.status(503).json({message : "Could not delete the user."});
-            } else {
-                return res.status(200).json({message : "User deleted successfully."});
+                return res.status(503).json({ message: "Could not delete the user."});
             }
 
+            return res.status(200).json({ message: "User deleted successfully."});
         });
 
 
@@ -69,7 +68,7 @@ router.delete('/:id_user', function (req, res, next) {
 
 
 
-})
+});
 
 
 module.exports = router;

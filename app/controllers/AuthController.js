@@ -58,7 +58,7 @@ router.post('/login', (req, res) => {
         var passwordIsValid = bcrypt.compareSync(req.body.password, user.password);
         if (!passwordIsValid) return res.status(401).send({ auth: false, token: null, message: "Invalid password" });
 
-        var token = jwt.sign({ id: user._id, admin_token: user.admin }, config.secret, {
+        var token = jwt.sign({ token_user_id: user._id, token_admin: user.admin }, config.secret, {
             expiresIn: 2628000 // one month in seconds
         });
 
