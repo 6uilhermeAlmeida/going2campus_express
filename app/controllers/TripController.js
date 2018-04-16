@@ -23,7 +23,11 @@ router.route('/')
 
     .get(function (req, res) {
 
-        Trip.find(function (err, trips) {
+        Trip.find()
+        .populate('driver')
+        .populate('pendingPassengers')
+        .populate('passengers')
+        .exec(function (err, trips) {
 
             if (err) {
                 console.log(err);

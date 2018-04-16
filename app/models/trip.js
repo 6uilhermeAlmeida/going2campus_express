@@ -8,13 +8,13 @@ var TripSchema = new Schema({
         numberOfSeatsAvailable: Number,
         tripDate: Date,
         duration: Number,
-        driver: String,
+        driver: { type: Schema.Types.ObjectId, ref: 'User' },
         departure: Boolean,
-        passengers: [String],
+        passengers: [{ type: Schema.Types.ObjectId, ref: 'User' }],
         status: Number,
         stoppingAdresses: [String],
         auto_accept: Boolean,
-        pendingPassengers: [String]
+        pendingPassengers: [{ type: Schema.Types.ObjectId, ref: 'User' }]
 
     },
 
