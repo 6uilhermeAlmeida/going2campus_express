@@ -147,7 +147,7 @@ router.put('/:id_trip/accept_passenger', verifyToken, (req, res) => {
         }
 
         if (trip.numberOfSeatsAvailable > 0) {
-            let index = trip.pendingPassengers.indexOf(req.body.passengerId);
+            var index = trip.pendingPassengers.indexOf(req.body.passengerId);
             if (index > -1) {
                 trip.pendingPassengers.splice(index, 1);
                 trip.passengers.push(req.body.passengerId);
