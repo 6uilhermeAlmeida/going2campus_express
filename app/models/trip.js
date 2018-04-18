@@ -6,11 +6,11 @@ var postExcept = ['stoppingAdresses', 'pendingPassengers', 'passengers', 'status
 var TripSchema = new Schema({
 
     departureAdress: { type: String, required: [true, "departureAdress is required."] },
-    destinyAdress: { type: String, required: [true, "destinyAdress is required."] },
+    destinationAdress: { type: String, required: [true, "destinationAdress is required."] },
     departureLatitude: { type: Number, required: [true, "departureLatitude is required."] },
     departureLongitude: { type: Number, required: [true, "departureLongitude is required."] },
-    destinyLatitude: { type: Number, required: [true, "destinyLatitude is required."] },
-    destinyLongitude: { type: Number, required: [true, "destinyLongitude is required."] },
+    destinationLatitude: { type: Number, required: [true, "destinationLatitude is required."] },
+    destinationLongitude: { type: Number, required: [true, "destinationLongitude is required."] },
     numberOfSeatsAvailable: { type: Number, required: [true, "numberOfSeatsAvailable is required."] },
 
     tripDate:
