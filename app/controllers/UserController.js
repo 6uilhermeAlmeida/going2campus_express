@@ -1,6 +1,7 @@
 
 var express = require('express');
 var User = require('../models/user');
+var Trip = require('../models/trip');
 var config = require('../config/config.js');
 var jwt = require('jsonwebtoken');
 var bcrypt = require('bcrypt-nodejs');
@@ -57,16 +58,38 @@ router.delete('/:id_user', function (req, res, next) {
         user.remove(function (err, user) {
 
             if (err) {
-                return res.status(503).json({ message: "Could not delete the user."});
+                return res.status(503).json({ message: "Could not delete the user." });
             }
 
-            return res.status(200).json({ message: "User deleted successfully."});
+            return res.status(200).json({ message: "User deleted successfully." });
         });
 
 
     });
 
 
+
+});
+
+router.get('/:id_user/trips/driver', function (req, res) {
+
+    User.findById(req.params.id_user, function (err, user) {
+        if (err) { 
+            console.log(err); 
+            return res.status(503).json({ message: "Database error, can´t find user." }) };
+
+        if (!user) return res.status(404).json({ message: "User not found." });
+    });
+
+
+    Trip.find({ 'driver': req.params.id_user }).populate("driver").exec(function (err, trips) {
+
+        if (err) return res.status(503).json({ message: "Database error, could not find trips." });
+        if (trips.length <= 0) return res.status(404).json({ message: "Trips not found." });
+
+        res.status(200).json(trips);
+
+    });
 
 });
 
