@@ -195,7 +195,7 @@ router.put('/:id_trip/accept_passenger', verifyToken, (req, res) => {
 
 router.put('/:id_trip/cancel', verifyToken, function (req, res) {
 
-    Trip.findById(req.params.id_trip, function (err, trip) {
+    Trip.findById(req.params.id_trip).populate("driver").exec(function (err, trip) {
 
         if (err) {
             return res.status(503).json({ message: "Something went wrong with the database." });
@@ -205,7 +205,7 @@ router.put('/:id_trip/cancel', verifyToken, function (req, res) {
             return res.status(404).json({ message: "Trip not found." });
         }
 
-        if (!req.token_admin && (req.params.id_user != req.token_user_id)) {
+        if (!req.token_admin && (trip.driver.id != req.token_user_id)) {
             return res.status(403).json({ message: "Unauthorized request, only admins or the trip driver can cancel the trip." });
         }
 
