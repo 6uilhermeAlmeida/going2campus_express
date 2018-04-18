@@ -1,19 +1,36 @@
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
+var postExcept = ['stoppingAdresses', 'pendingPassengers', 'passengers', 'status'];
+
 var TripSchema = new Schema({
 
-    startingAdress: String,
-    endingAdress: String,
-    numberOfSeatsAvailable: Number,
-    tripDate: Date,
-    duration: Number,
-    driver: { type: Schema.Types.ObjectId, ref: 'User' },
-    departure: Boolean,
+    departureAdress: { type: String, required: [true, "departureAdress is required."] },
+    destinyAdress: { type: String, required: [true, "destinyAdress is required."] },
+    departureLatitude: { type: Number, required: [true, "departureLatitude is required."] },
+    departureLongitude: { type: Number, required: [true, "departureLongitude is required."] },
+    destinyLatitude: { type: Number, required: [true, "destinyLatitude is required."] },
+    destinyLongitude: { type: Number, required: [true, "destinyLongitude is required."] },
+    numberOfSeatsAvailable: { type: Number, required: [true, "numberOfSeatsAvailable is required."] },
+
+    tripDate:
+        {
+            type: Date, required: [true, "tripDate is required, eg. 2012/12/31 14:30"],
+            validate: {
+                validator: function(v) {
+                  return v > Date.now();
+                },
+                message: 'The date must be in the future.'
+              }
+        },
+
+    duration: { type: Number, required: [true, "duration is required."] },
+    driver: { type: Schema.Types.ObjectId, ref: 'User', required: [true, "driver is required (id)."] },
+    departure: { type: Boolean, required: [true, "departure is required, true or false."] },
     passengers: [{ type: Schema.Types.ObjectId, ref: 'User' }],
-    status: Number,
+    status: { type: String, enum: ['LISTED', 'ONGOING', 'FINISHED', 'CANCELED'], default: 'LISTED' },
     stoppingAdresses: [String],
-    auto_accept: Boolean,
+    autoAccept: { type: Boolean, required: [true, "autoAccept is required."] },
     pendingPassengers: [{ type: Schema.Types.ObjectId, ref: 'User' }]
 
 },
@@ -22,5 +39,17 @@ var TripSchema = new Schema({
         timestamps: true
     }
 );
+
+TripSchema.statics.postMiddleware = function (req, res, next) {
+    
+    postExcept.forEach(function (path) {
+        delete req.body[path];
+    });
+
+    next();
+
+}
+
+
 
 module.exports = mongoose.model('Trip', TripSchema);

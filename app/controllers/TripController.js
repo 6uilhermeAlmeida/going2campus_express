@@ -8,13 +8,34 @@ var User = require('../models/user');
 
 router.route('/')
 
-    .post(function (req, res) {
+    .post([verifyToken,Trip.postMiddleware], function (req, res) {
 
         var trip = new Trip(req.body);
 
         trip.save(function (err) {
+
+            var errors = [];
+
             if (err) {
-                console.log(err.message);
+
+                if (err.errors) {
+                    Trip.schema.eachPath(function (eachPath) {
+                        if (err.errors[eachPath]) {
+                            errors.push({ errorMessage: err.errors[eachPath].message });
+                        }
+                    });
+                }
+
+                if (errors) {
+                    res.status(400).json({
+                        errors: errors
+                    });
+                } else {
+
+                    res.status(503).json({ message: "Database error." });
+
+                }
+
             }
 
             res.status(200).json(trip);
@@ -41,7 +62,7 @@ router.route('/')
 
     });
 
-router.put('/:id_trip/add_passenger', (req, res) => {
+router.put('/:id_trip/add_passenger', verifyToken, (req, res) => {
 
 
     if (!req.body.passengerId) {
@@ -168,6 +189,37 @@ router.put('/:id_trip/accept_passenger', verifyToken, (req, res) => {
         } else {
             res.status(202).json({ message: "Car has no seats available." });
         }
+    });
+
+});
+
+router.put('/:id_trip/cancel', verifyToken, function (req, res) {
+
+    Trip.findById(req.params.id_trip, function (err, trip) {
+
+        if (err) {
+            return res.status(503).json({ message: "Something went wrong with the database." });
+        }
+
+        if (!trip) {
+            return res.status(404).json({ message: "Trip not found." });
+        }
+
+        if (!req.token_admin && (req.params.id_user != req.token_user_id)) {
+            return res.status(403).json({ message: "Unauthorized request, only admins or the trip driver can cancel the trip." });
+        }
+
+        trip.status = 'CANCELED';
+        trip.save(function (err) {
+
+            if (err) {
+                return res.status(503).json({ message: "Database error, we could not save the trip" });
+            }
+
+            res.status(200).json({ message: "Trip canceled successfully" });
+
+        });
+
     });
 
 });
