@@ -2,9 +2,12 @@ var express = require('express');
 var config = require('../config/config.js');
 var jwt = require('jsonwebtoken');
 var bcrypt = require('bcrypt-nodejs');
-var router = express.Router();
 var User = require('../models/user.js');
 var sha256 = require('js-sha256');
+var mailer = require('nodemailer');
+
+
+var router = express.Router();
 
 
 
@@ -46,8 +49,28 @@ router.post('/register', function (req, res) {
                 return;
             }
 
+            var transporter = mailer.createTransport({
+                service: 'gmail',
+                auth: {
+                    user: config.mail_user,
+                    pass: config.mail_password
+                }
+            });
+
+            const mailOptions = {
+                from: config.mail_user, // sender address
+                to: user.mail, // list of receivers
+                subject: 'Account confirmation', // Subject line
+                html: '<p>Confirm your account <a href =' + config.host + 'api/auth/verify/' + user.id + '/' + sha256(String(user.id + user.createdAt.getTime() + config.secret)) + '>here</a></p>'// plain text body
+            };
+
+            transporter.sendMail(mailOptions, function (err, info) {
+                if (err)
+                    console.log(err);
+            });
+
             user.password = undefined;
-            res.status(201).json(user);
+            res.status(201).json({ message: "We´ve sent a verification e-mail to " + user.mail + ".", user: user });
         });
 });
 
@@ -70,7 +93,7 @@ router.post('/login', (req, res) => {
     });
 });
 
-router.post('/verify/:id_user/:verification_code', function (req, res) {
+router.get('/verify/:id_user/:verification_code', function (req, res) {
 
 
     User.findById(req.params.id_user, function (err, user) {
@@ -78,7 +101,7 @@ router.post('/verify/:id_user/:verification_code', function (req, res) {
         if (err) return res.status(500).json({ message: "Error on the serve database." });
         if (!user) return res.status(404).json({ message: 'User not found.' });
 
-        var expectedToken = sha256(String(user.id + user.createdAt.getTime()));
+        var expectedToken = sha256(String(user.id + user.createdAt.getTime() + config.secret));
 
         console.log({ db_status: expectedToken });
         console.log({ req: req.params.verification_code });
@@ -89,18 +112,18 @@ router.post('/verify/:id_user/:verification_code', function (req, res) {
             user.active = true;
 
             user.save(function (err, user) {
-                
+
                 if (err) {
-                    return res.status(503).json({message : "Database error, could not save user."});
+                    return res.status(503).json({ message: "Database error, could not save user." });
                 }
 
-                return res.status(200).json({message : "You are now active, enjoy!"})
+                return res.status(200).json({ message: "You are now active, enjoy!" })
 
             })
 
         } else {
 
-            return res.status(401).json({message : "You need a valid token to activate your account!"});
+            return res.status(401).json({ message: "You need a valid token to activate your account!" });
 
         }
 
