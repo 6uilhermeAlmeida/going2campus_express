@@ -48,7 +48,7 @@ TripSchema.statics.postMiddleware = function (req, res, next) {
 
     next();
 
-}
+};
 
 
 
