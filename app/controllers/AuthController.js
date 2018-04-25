@@ -117,9 +117,9 @@ router.get('/verify/:id_user/:verification_code', function (req, res) {
                     return res.status(503).json({ message: "Database error, could not save user." });
                 }
 
-                return res.status(200).json({ message: "You are now active, enjoy!" })
+                return res.status(200).json({ message: "You are now active, enjoy!" });
 
-            })
+            });
 
         } else {
 
@@ -129,6 +129,6 @@ router.get('/verify/:id_user/:verification_code', function (req, res) {
 
     });
 
-})
+});
 
 module.exports = router;
