@@ -3,7 +3,7 @@ var config = require('../config/config.js');
 var User = require('../models/user');
 
 function verifyToken(req, res, next) {
-  if (req.method == "OPTIONS") {
+  if (req.method === "OPTIONS") {
     next();
   }
 
