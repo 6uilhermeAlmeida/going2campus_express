@@ -102,7 +102,7 @@ router.put('/:id_trip/add_passenger', verifyToken, (req, res) => {
         }
 
 
-        if (trip.pendingPassengers.indexOf(req.body.passengerId) > 0 || trip.passengers.indexOf(req.body.passengerId) > 0) {
+        if (trip.pendingPassengers.indexOf(req.body.passengerId) > -1 || trip.passengers.indexOf(req.body.passengerId) > -1) {
             return res.status(409).json({ message: "This user is already listed for this trip." });
         }
 
