@@ -76,7 +76,8 @@ router.get('/:id_user/trips/driver', function (req, res) {
     User.findById(req.params.id_user, function (err, user) {
         if (err) { 
             console.log(err); 
-            return res.status(503).json({ message: "Database error, can´t find user." }) };
+            return res.status(503).json({ message: "Database error, can´t find user." });
+        }
 
         if (!user) return res.status(404).json({ message: "User not found." });
     });
@@ -91,6 +92,27 @@ router.get('/:id_user/trips/driver', function (req, res) {
 
     });
 
+});
+
+router.patch('/:id_user/edit', verifyToken, function (req, res) {
+    
+    if (!req.token_admin && (req.params.id_user != req.token_user_id)) {
+        return res.status(403).json({ message: "Unauthorized request" });
+    }
+
+    if(req.body.hasOwnProperty("rating") || req.body.hasOwnProperty("rating") || req.body.hasOwnProperty("cancelIndex") || req.body.hasOwnProperty("admin") || 
+    req.body.hasOwnProperty("cancelIndex") || req.body.hasOwnProperty("cancelCounter") || req.body.hasOwnProperty("createdAt")){
+        return res.status(403).json({ message: "Can't update one of these fields. Edit cancelled" });
+    }
+    
+
+    User.findOneAndUpdate({_id: req.params.id_user}, req.body, {new: true}, function(err, user) {
+        if (err) { 
+            console.log(err); 
+            return res.status(503).json({ message: "Database error, can´t find user." });
+        }
+        res.status(200).json(user);
+      });      
 });
 
 
