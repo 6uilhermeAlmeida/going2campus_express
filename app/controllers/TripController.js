@@ -62,14 +62,16 @@ router.route('/')
 
     });
 
-router.put('/:id_trip/add_passenger', verifyToken, (req, res) => {
-
+router.patch('/:id_trip/add_passenger', verifyToken, (req, res) => {
 
     if (!req.body.passengerId) {
         res.status(400).send("Bad request, wrong attribute name.");
         return;
     }
 
+    if (req.body.passengerId != req.token_user_id && !req.token_admin) {
+        return res.status(403).json({ message: "Unauthorized Request" });
+    }
 
     User.findById(req.body.passengerId, function (err, user) {
 
@@ -133,7 +135,7 @@ router.put('/:id_trip/add_passenger', verifyToken, (req, res) => {
 
 });
 
-router.put('/:id_trip/accept_passenger', verifyToken, (req, res) => {
+router.patch('/:id_trip/accept_passenger', verifyToken, (req, res) => {
 
     if (!req.body.passengerId) {
         res.status(400).send("Bad request, wrong attribute name.");
@@ -163,7 +165,7 @@ router.put('/:id_trip/accept_passenger', verifyToken, (req, res) => {
             return res.status(404).send("404 Trip not found.");
         }
 
-        if (trip.driver.id != req.token_user_id) {
+        if (trip.driver.id != req.token_user_id && !req.token_admin) {
             return res.status(403).json({ message: "Unauthorized Request" });
         }
 
@@ -193,7 +195,7 @@ router.put('/:id_trip/accept_passenger', verifyToken, (req, res) => {
 
 });
 
-router.put('/:id_trip/cancel', verifyToken, function (req, res) {
+router.patch('/:id_trip/cancel', verifyToken, function (req, res) {
 
     Trip.findById(req.params.id_trip).populate("driver").exec(function (err, trip) {
 
@@ -224,7 +226,7 @@ router.put('/:id_trip/cancel', verifyToken, function (req, res) {
 
 });
 
-router.put('/:id_trip/reject_passenger', verifyToken, (req, res) => {
+router.patch('/:id_trip/reject_passenger', verifyToken, (req, res) => {
 
     if (!req.body.passengerId) {
         res.status(400).send("Bad request, wrong attribute name.");
@@ -254,7 +256,7 @@ router.put('/:id_trip/reject_passenger', verifyToken, (req, res) => {
             return res.status(404).send("404 Trip not found.");
         }
 
-        if (trip.driver.id != req.token_user_id) {
+        if (trip.driver.id != req.token_user_id && !req.token_admin) {
             return res.status(403).json({ message: "Unauthorized Request" });
         }
 
@@ -278,7 +280,7 @@ router.put('/:id_trip/reject_passenger', verifyToken, (req, res) => {
 
 });
 
-router.put('/:id_trip/cancel_reservation', verifyToken, (req, res) => {
+router.patch('/:id_trip/cancel_reservation', verifyToken, (req, res) => {
 
     if (!req.body.passengerId) {
         res.status(400).json({ message: "Bad request, wrong attribute name." });
