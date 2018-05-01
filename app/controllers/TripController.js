@@ -62,14 +62,16 @@ router.route('/')
 
     });
 
-router.put('/:id_trip/add_passenger', verifyToken, (req, res) => {
-
+router.patch('/:id_trip/add_passenger', verifyToken, (req, res) => {
 
     if (!req.body.passengerId) {
         res.status(400).send("Bad request, wrong attribute name.");
         return;
     }
 
+    if (req.body.passengerId != req.token_user_id && !req.token_admin) {
+        return res.status(403).json({ message: "Unauthorized Request" });
+    }
 
     User.findById(req.body.passengerId, function (err, user) {
 
@@ -102,7 +104,7 @@ router.put('/:id_trip/add_passenger', verifyToken, (req, res) => {
         }
 
 
-        if (trip.pendingPassengers.indexOf(req.body.passengerId) < 0 || trip.passengers.indexOf(req.body.passengerId) < 0) {
+        if (trip.pendingPassengers.indexOf(req.body.passengerId) > -1 || trip.passengers.indexOf(req.body.passengerId) > -1) {
             return res.status(409).json({ message: "This user is already listed for this trip." });
         }
 
@@ -133,7 +135,7 @@ router.put('/:id_trip/add_passenger', verifyToken, (req, res) => {
 
 });
 
-router.put('/:id_trip/accept_passenger', verifyToken, (req, res) => {
+router.patch('/:id_trip/accept_passenger', verifyToken, (req, res) => {
 
     if (!req.body.passengerId) {
         res.status(400).send("Bad request, wrong attribute name.");
@@ -163,7 +165,7 @@ router.put('/:id_trip/accept_passenger', verifyToken, (req, res) => {
             return res.status(404).send("404 Trip not found.");
         }
 
-        if (trip.driver.id != req.token_user_id) {
+        if (trip.driver.id != req.token_user_id && !req.token_admin) {
             return res.status(403).json({ message: "Unauthorized Request" });
         }
 
@@ -193,7 +195,7 @@ router.put('/:id_trip/accept_passenger', verifyToken, (req, res) => {
 
 });
 
-router.put('/:id_trip/cancel', verifyToken, function (req, res) {
+router.patch('/:id_trip/cancel', verifyToken, function (req, res) {
 
     Trip.findById(req.params.id_trip).populate("driver").exec(function (err, trip) {
 
@@ -220,6 +222,124 @@ router.put('/:id_trip/cancel', verifyToken, function (req, res) {
 
         });
 
+    });
+
+});
+
+router.patch('/:id_trip/reject_passenger', verifyToken, (req, res) => {
+
+    if (!req.body.passengerId) {
+        res.status(400).send("Bad request, wrong attribute name.");
+        return;
+    }
+
+    User.findById(req.body.passengerId, function (err, user) {
+
+        if (err) {
+            return res.status(503).json({ message: "We can't know if you are an user or not." });
+        }
+
+        if (!user) {
+            return res.status(404).json({ message: "This user does not exist." });
+        }
+
+    });
+
+    Trip.findById(req.params.id_trip).populate("driver").exec(function (err, trip) {
+
+        if (err) {
+            console.log(err);
+            return res.status(503).send("Error retrieving data from database.");
+        }
+
+        if (!trip) {
+            return res.status(404).send("404 Trip not found.");
+        }
+
+        if (trip.driver.id != req.token_user_id && !req.token_admin) {
+            return res.status(403).json({ message: "Unauthorized Request" });
+        }
+
+        var index = trip.pendingPassengers.indexOf(req.body.passengerId);
+        
+        if (index > -1) {
+            trip.pendingPassengers.splice(index, 1);
+            trip.save(function (err) {
+                if (err) {
+                    console.log(err);
+                    res.status(503).send("Error saving data to database.");
+                    return;
+                }
+                res.status(200).json(trip);
+            });
+        }
+        else {
+            res.status(409).json({ message: "User did not reserve this trip." });
+        }
+    });
+
+});
+
+router.patch('/:id_trip/cancel_reservation', verifyToken, (req, res) => {
+
+    if (!req.body.passengerId) {
+        res.status(400).json({ message: "Bad request, wrong attribute name." });
+        return;
+    }
+
+    User.findById(req.body.passengerId, function (err, user) {
+
+        if (err) {
+            return res.status(503).json({ message: "We can't know if you are an user or not." });
+        }
+
+        if (!user) {
+            return res.status(404).json({ message: "This user does not exist." });
+        }
+
+    });
+
+    Trip.findById(req.params.id_trip).exec(function (err, trip) {
+
+        if (err) {
+            console.log(err);
+            return res.status(503).json({ message: "Error retrieving from database" });
+        }
+
+        if (!trip) {
+            return res.status(404).json({ message: "Trip not found." });
+        }
+
+
+        var indexPending = trip.pendingPassengers.indexOf(req.body.passengerId);
+        var indexPassengers = trip.passengers.indexOf(req.body.passengerId);
+
+        if(indexPassengers > -1){
+            trip.passengers.splice(indexPassengers, 1);
+            trip.save(function (err) {
+                if (err) {
+                    console.log(err);
+                    res.status(503).json({ message: "Error saving to database" });
+                }
+                res.status(200).json({message: "Reservation cancelled.", trip: trip});
+            });
+        }
+        else{
+            if (indexPending > -1) {
+                trip.pendingPassengers.splice(indexPending, 1);
+                trip.save(function (err) {
+                    if (err) {
+                        console.log(err);
+                        res.status(503).json({ message: "Error saving to database" });
+                    }
+                    res.status(200).json({message: "Reservation cancelled.", trip: trip});
+                });
+            }
+            else{
+                res.status(409).json({ message: "User did not reserve this trip." });
+            }
+        }
+        
     });
 
 });
