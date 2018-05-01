@@ -5,10 +5,12 @@ var bcrypt = require('bcrypt-nodejs');
 var User = require('../models/user.js');
 var sha256 = require('js-sha256');
 var mailer = require('nodemailer');
+var Mustache = require('mustache');
+var fs = require('fs');
+
 
 
 var router = express.Router();
-
 
 
 
@@ -57,17 +59,32 @@ router.post('/register', function (req, res) {
                 }
             });
 
-            const mailOptions = {
-                from: config.mail_user, // sender address
-                to: user.mail, // list of receivers
-                subject: 'Account confirmation', // Subject line
-                html: '<p>Confirm your account <a href =' + config.host + 'api/auth/verify/' + user.id + '/' + sha256(String(user.id + user.createdAt.getTime() + config.secret)) + '>here</a></p>'// plain text body
-            };
 
-            transporter.sendMail(mailOptions, function (err, info) {
-                if (err)
+            fs.readFile('app/config/mail.html', 'utf8', function (err, html) {
+
+                if (err) {
                     console.log(err);
+                }
+
+                var template = html;
+                var rendered = Mustache.render(template, {user: user , action_url : config.host + 'api/auth/verify/' + user.id + '/' + sha256(String(user.id + user.createdAt.getTime() + config.secret))});
+
+                const mailOptions = {
+                    from: config.mail_user, // sender address
+                    to: user.mail, // list of receivers
+                    subject: 'Account confirmation', // Subject line
+                    html: rendered
+
+                    //html: '<p>Confirm your account <a href =' + config.host + 'api/auth/verify/' + user.id + '/' + sha256(String(user.id + user.createdAt.getTime() + config.secret)) + '>here</a></p>'// plain text body
+                };
+
+                transporter.sendMail(mailOptions, function (err, info) {
+                    if (err)
+                        console.log(err);
+                });
             });
+
+
 
             user.password = undefined;
             res.status(201).json({ message: "We´ve sent a verification e-mail to " + user.mail + ".", user: user });
@@ -117,9 +134,9 @@ router.get('/verify/:id_user/:verification_code', function (req, res) {
                     return res.status(503).json({ message: "Database error, could not save user." });
                 }
 
-                return res.status(200).json({ message: "You are now active, enjoy!" })
+                return res.status(200).json({ message: "You are now active, enjoy!" });
 
-            })
+            });
 
         } else {
 
@@ -129,6 +146,6 @@ router.get('/verify/:id_user/:verification_code', function (req, res) {
 
     });
 
-})
+});
 
 module.exports = router;
