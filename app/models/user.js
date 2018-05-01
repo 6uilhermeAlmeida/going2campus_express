@@ -1,6 +1,8 @@
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
+var postExcept = ['numberOfRates', 'admin', 'active', 'cancelCounter', 'cancelCounter', 'rating', 'photoUrl'];
+
 var UserSchema = new Schema({
 
     mail: {
@@ -29,5 +31,14 @@ var UserSchema = new Schema({
         timestamps: true
     }
 );
+
+UserSchema.statics.postMiddleware = function (req, res, next) {
+    
+    postExcept.forEach(function (path) {
+        delete req.body[path];
+    });
+    next();
+
+};
 
 module.exports = mongoose.model('User', UserSchema);
