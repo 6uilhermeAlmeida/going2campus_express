@@ -85,7 +85,11 @@ router.patch('/:id_trip/add_passenger', verifyToken, (req, res) => {
 
     });
 
-    Trip.findById(req.params.id_trip).populate("driver").exec(function (err, trip) {
+    Trip.findById(req.params.id_trip)
+    .populate("driver")
+    .populate('pendingPassengers')
+    .populate('passengers')
+    .exec(function (err, trip) {
 
         if (err) {
             console.log(err);
