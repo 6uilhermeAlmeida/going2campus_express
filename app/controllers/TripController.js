@@ -112,7 +112,7 @@ router.patch('/:id_trip/add_passenger', verifyToken, (req, res) => {
 
         if (trip.numberOfSeatsAvailable > 0) {
 
-            if (trip.auto_accept) {
+            if (trip.autoAccept) {
                 trip.passengers.push(req.body.passengerId);
                 trip.numberOfSeatsAvailable--;
             } else {
