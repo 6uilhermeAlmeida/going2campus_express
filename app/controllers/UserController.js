@@ -61,7 +61,7 @@ router.delete('/:id_user', function (req, res, next) {
                 return res.status(503).json({ message: "Could not delete the user." });
             }
 
-            return res.status(200).json({ message: "User deleted successfully." });
+            return res.status(204).json({ message: "User deleted successfully." });
         });
 
 
@@ -74,8 +74,8 @@ router.delete('/:id_user', function (req, res, next) {
 router.get('/:id_user/trips/driver', function (req, res) {
 
     User.findById(req.params.id_user, function (err, user) {
-        if (err) { 
-            console.log(err); 
+        if (err) {
+            console.log(err);
             return res.status(503).json({ message: "Database error, can´t find user." });
         }
 
@@ -94,19 +94,45 @@ router.get('/:id_user/trips/driver', function (req, res) {
 
 });
 
+
+router.get('/:id_user/trips', function (req, res) {
+
+    User.findById(req.params.id_user, function (err, user) {
+        if (err) {
+            console.log(err);
+            return res.status(503).json({ message: "Database error, can´t find user." });
+        }
+
+        if (!user) return res.status(404).json({ message: "User not found." });
+    });
+
+    Trip.find({ $or: [ {'driver': req.params.id_user}, {'passengers' : req.params.id_user} ] }).populate("driver").exec(function (err, trips) {
+
+        if (err) return res.status(503).json({ message: "Database error, could not find trips." });
+        
+        if (trips.length <= 0) return res.status(404).json({ message: "Trips not found." });
+
+        res.status(200).json(trips);
+
+    });
+
+});
+
+
+
 router.patch('/:id_user/edit', [verifyToken, User.postMiddleware], function (req, res) {
-    
+
     if (!req.token_admin && (req.params.id_user != req.token_user_id)) {
         return res.status(403).json({ message: "Unauthorized request" });
     }
-    
-    User.findOneAndUpdate({_id: req.params.id_user}, req.body, {new: true}, function(err, user) {
-        if (err) { 
-            console.log(err); 
+
+    User.findOneAndUpdate({ _id: req.params.id_user }, req.body, { new: true }, function (err, user) {
+        if (err) {
+            console.log(err);
             return res.status(503).json({ message: "Database error, can´t find user." });
         }
         res.status(200).json(user);
-      });      
+    });
 });
 
 

@@ -1,4 +1,5 @@
 FORMAT: 1A
+HOST : 172.22.21.11:3000
 
 # Going2Campus API documentation
 
@@ -8,10 +9,33 @@ This is the documentation for our car-sharing API, Going2Campus.
 
 ## User Collection [/users]
 
-### Get All Users [GET /users]
+### Get All Users [GET]
 + Response 200 (application/json)
-    + Attributes
-        - users (array[User])
+    + Attributes (array[User])
+
+### Get Me [GET /me]
++ Response 200 (application/json)
+    + Attributes (User)
+    
+### Delete User [DELETE /{id}]
++ Parameters
+    + id
++ Response 204 (application/json)
+    + Attributes (User)
+    
++ Response 503 (application/json)
+    + Attributes 
+        + message  (string)
+    + Body
+
+            { "message" : "Could not retrieve the user." }
+            
++ Response 404 (application/json)
+    + Attributes 
+        + message  (string)
+    + Body
+
+            { "message" : "User not found." }
         
 # Data Structures
 
