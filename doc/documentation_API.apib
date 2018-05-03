@@ -36,7 +36,33 @@ This is the documentation for our car-sharing API, Going2Campus.
     + Body
 
             { "message" : "User not found." }
+
+# Group Trips
+
+## Trip Collection [/trips]
+
+### Get All Trips [GET /trips]
++ Response 200 (application/json)
+    + Attributes
+        - trips (array[Trip])
+
         
+### Add Passenger to Trip [PATCH /trips/{id}/add_passenger]
++ Request
+    + Body
+
+            {
+                "passengerId": "123456"
+            }
+    
++ Parameter
+    + id: `1` - The id of the trip
+            
+    
++ Response 200 (application/json)
+    + Attributes
+        - trip (Trip)
+
 # Data Structures
 
 ## User(object)
@@ -47,3 +73,21 @@ This is the documentation for our car-sharing API, Going2Campus.
 - preferences: talker, smoker (array[string]) - User's preferences being the driver
 - birthDate: `1997-09-08T23:00:00.000Z` (string) - User's date of birth
 - cancel_index: 0.1 (number) - How often this user cancels a trip
+
+## Trip(object)
+- departureAddress: Campus 2 Morro do Lena, Alto do Vieiro, Apt 4163, Edifício D, 2411 901 Leiria (string) - The departure Address
+- destination:  Campus 1 Rua Dr. João Soares Apt 4045 Leiria (string) - The destination Address
+- departureLatitude: 26.81 (number) - The departure's latitude
+- departureLongitude: 91.53 (number) - The departure's longitude
+- destinationLatitude: 23.17 (number) - The destination's latitude
+- destinationLongitude: 88.15 (number) - The destination's longitude
+- numberOfSeatsAvailable: 4 (number) - The number of seats still numberOfSeatsAvailable
+- tripDate: `2019-12-31T14:30:00.000Z` (string) - Trip departure's date
+- duration: 120 (number) - Trip duration in minutes
+- driver: User - Trip driver
+- departure: true (boolean) - Whether the trip is to campus or from campus
+- passengers: Carlos, Miguel (array[User]) - Array of Passengers
+- status: ONGOING (string) - Status of the trip LISTED, ONGOING, FINISHED, CANCELED
+- stoppingAddresses: Rua das Portelas, Rua do Campo (array[string]) - Addresses where the trip will stop
+- autoAccept: true (boolean) - Auto accepting any passenger
+- pendingPassengers: Carlos, Miguel (array[User]) - Array of Passengers
