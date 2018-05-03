@@ -106,12 +106,14 @@ router.get('/:id_user/trips', function (req, res) {
         if (!user) return res.status(404).json({ message: "User not found." });
     });
 
-    Trip.find({ $or: [ {'driver': req.params.id_user}, {'passengers' : req.params.id_user} ] }).populate("driver").exec(function (err, trips) {
+    Trip.find({ $or: [ {'driver': req.params.id_user}, {'passengers' : req.params.id_user} ] })
+    .populate("driver")
+    .populate("passengers")
+    .populate("pendingPassengers")
+    .exec(function (err, trips) {
 
         if (err) return res.status(503).json({ message: "Database error, could not find trips." });
         
-        if (trips.length <= 0) return res.status(404).json({ message: "Trips not found." });
-
         res.status(200).json(trips);
 
     });
