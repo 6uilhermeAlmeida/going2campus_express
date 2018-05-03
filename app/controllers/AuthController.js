@@ -124,6 +124,8 @@ router.post('/login', (req, res) => {
             expiresIn: 2628000 // one month in seconds
         });
 
+        user.password = undefined;
+
         res.status(200).send({
             auth: true,
             token: token,
