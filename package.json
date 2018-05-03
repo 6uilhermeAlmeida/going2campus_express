@@ -7,8 +7,8 @@
         "express": "^4.16.3",
         "js-sha256": "^0.9.0",
         "jsonwebtoken": "^8.2.1",
+        "mongoose": "^5.0.17",
         "mustache": "^2.3.0",
-        "mongoose": "^5.0.16",
         "nodemailer": "^4.6.4"
     }
 }
