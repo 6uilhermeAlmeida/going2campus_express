@@ -136,11 +136,12 @@ router.patch('/:id_user/edit', [verifyToken, User.postMiddleware], function (req
 
 router.patch('/:id_user/change_password', verifyToken, function (req, res) {
 
-
+    //Can only edit yourself, unless you're an admin
     if ((req.token_user_id != req.params.id_user) && !req.token_admin) {
         return res.status(403).json({ message: "Forbidden request." });
     }
 
+    //Required fields
     if (!req.body.oldPassword || !req.body.newPassword) {
         return res.status(400).json({ message: "Bad request. Make sure the fields oldPassword and newPassword exist." });
     }
@@ -148,43 +149,54 @@ router.patch('/:id_user/change_password', verifyToken, function (req, res) {
     var id;
 
     if (req.token_admin && (req.token_user_id != req.params.id_user)) {
+        //if you're an admin and you want to change someone's password, the ID will be in the URL parameters
         id = req.params.id_user;
     } else {
+        //At this point, you can be an admin or not and you just want to edit yourself, so the ID is yours
         id = req.token_user_id;
     }
 
+    //password is not selected by default, specify you want it here!
     User.findById(id).select('+password').exec(function (err, user) {
 
         if (err) {
-
+            //Log those database errors!
             console.log(err);
-            return res.status(503).json({ message: "A problem ocurred with the database." });
+            return res.status(503).json({ message: "A problem occurred with the database." });
 
         }
 
         if (!user) {
-
+            //If you are an admin, this will warn you about a non found user, if you're not, this was already checked in the middleware!
             return res.status(404).json({ message: "This user was not found." })
             
         } else {
 
+            //Compare the old password with the hash stored in the database. 
             if (bcrypt.compareSync(req.body.oldPassword, user.password)) {
 
+                //true, confirmed!
+                //Hash the new password!
                 user.password = bcrypt.hashSync(req.body.newPassword);
 
             } else {
 
+                //false, returned!
                 return res.status(403).json({ message : "Forbidden. Wrong credentials."});
 
             }
 
+            //At this point everything is OK, let us save this user!
             user.save(function (err) {
                 
+                
                 if (err) {
+                    //LOG THEM DB ERRORS!
                     console.log(err);
-                    return res.status(503).json({ message: "A problem ocurred with the database." });
+                    return res.status(503).json({ message: "A problem occurred with the database." });
                 }
 
+                //HOORAY!
                 return res.status(200).json({ message : "Password changed successfully" });
 
             });
