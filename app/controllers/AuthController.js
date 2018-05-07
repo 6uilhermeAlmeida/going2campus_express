@@ -71,11 +71,7 @@ router.post('/register', function (req, res) {
                 }
 
                 var template = html;
-                var rendered = Mustache.render(template,
-                    {
-                        user: user,
-                        action_url: config.host + 'api/auth/verify/' + user.id + '/' + sha256(String(user.id + user.createdAt.getTime() + config.secret))
-                    });
+                var rendered = Mustache.render(template, {user: user , action_url : config.host + 'api/auth/verify/' + user.id + '/' + sha256(String(user.id + user.createdAt.getTime() + config.secret))});
 
                 const mailOptions = {
                     from: config.mail_user, // sender address
@@ -125,19 +121,18 @@ router.post('/login', (req, res) => {
             token_user_id: user._id,
             token_admin: user.admin
         }, config.secret, {
-                expiresIn: 2628000 // one month in seconds
-            });
+            expiresIn: 2628000 // one month in seconds
+        });
 
         user.password = undefined;
 
         res.status(200).send({
             auth: true,
             token: token,
-            user: user
+            user : user
         });
     });
 });
-
 
 router.get('/verify/:id_user/:verification_code', function (req, res) {
 
@@ -188,5 +183,6 @@ router.get('/verify/:id_user/:verification_code', function (req, res) {
 
 });
 
+router.get('/reset/:id_user')
 
 module.exports = router;

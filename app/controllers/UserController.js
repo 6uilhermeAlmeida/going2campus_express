@@ -7,7 +7,6 @@ var jwt = require('jsonwebtoken');
 var bcrypt = require('bcrypt-nodejs');
 var verifyToken = require('../auth/VerifyToken.js');
 
-
 var router = express.Router();
 
 router.use(verifyToken);
@@ -152,7 +151,7 @@ router.patch('/:id_user/change_password', verifyToken, function (req, res) {
         //if you're an admin and you want to change someone's password, the ID will be in the URL parameters
         id = req.params.id_user;
     } else {
-        //At this point you just want to edit yourself, so the ID is yours
+        //At this point, you can be an admin or not and you just want to edit yourself, so the ID is yours
         id = req.token_user_id;
     }
 
