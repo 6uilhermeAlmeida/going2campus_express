@@ -168,7 +168,7 @@ router.patch('/:id_user/change_password', verifyToken, function (req, res) {
         if (!user) {
             //If you are an admin, this will warn you about a non found user, if you're not, this was already checked in the middleware!
             return res.status(404).json({ message: "This user was not found." })
-            
+
         } else {
 
             //Compare the old password with the hash stored in the database. 
@@ -181,14 +181,14 @@ router.patch('/:id_user/change_password', verifyToken, function (req, res) {
             } else {
 
                 //false, returned!
-                return res.status(403).json({ message : "Forbidden. Wrong credentials."});
+                return res.status(403).json({ message: "Forbidden. Wrong credentials." });
 
             }
 
             //At this point everything is OK, let us save this user!
             user.save(function (err) {
-                
-                
+
+
                 if (err) {
                     //LOG THEM DB ERRORS!
                     console.log(err);
@@ -196,7 +196,7 @@ router.patch('/:id_user/change_password', verifyToken, function (req, res) {
                 }
 
                 //HOORAY!
-                return res.status(200).json({ message : "Password changed successfully" });
+                return res.status(200).json({ message: "Password changed successfully" });
 
             });
 
