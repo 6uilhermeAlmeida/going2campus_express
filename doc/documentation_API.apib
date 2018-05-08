@@ -17,25 +17,152 @@ This is the documentation for our car-sharing API, Going2Campus.
 + Response 200 (application/json)
     + Attributes (User)
     
++ Response 500 (application/json)
+
+    + Attributes 
+        +message (string)
+        
+    + Body
+
+            {
+                "message" : "There was a problem finding the user."
+            }
+            
++ Response 404 (application/json)
+
+    + Attributes 
+        +message (string)
+        
+    + Body
+
+            {
+                "message" : "No user found"
+            }
+
 ### Delete User [DELETE /{id}]
 + Parameters
     + id
-+ Response 204 (application/json)
++ Response 200 (application/json)
+
+    + Attributes 
+        + message  (string)
+        
+    + Body
+
+            {
+                "message" : "User deleted successfully."
+            }
+    
++ Response 503 (application/json)
+
+    + Attributes 
+        + message  (string)
+        
+    + Body
+
+            {
+                "message" : "Could not delete/retrieve the user."
+            }
+            
++ Response 404 (application/json)
+
+    + Attributes 
+        + message  (string)
+        
+    + Body
+
+            {
+                "message" : "User not found."
+            }
+
+### Get User trips (as a driver) [GET /{id}/trips/driver]
++ Parameters
+    + id
+
++ Response 200 (application/json)
+    + Attributes (array[Trip])
+    
++ Response 404 (application/json)
+
+    + Attributes 
+        +message (string)
+        
+    + Body
+
+            {
+                "message" : "No user/trip found"
+            }
++ Response 503 (application/json)
+
+    + Attributes 
+        + message  (string)
+        
+    + Body
+
+            {
+                "message" : "Database error, could not find user/trips."
+            }
+            
+### Get User trips [GET /{id}/trips]
++ Parameters
+    + id
+
++ Response 200 (application/json)
+    + Attributes (array[Trip])
+    
++ Response 404 (application/json)
+
+    + Attributes 
+        +message (string)
+        
+    + Body
+
+            {
+                "message" : "No user found"
+            }
++ Response 503 (application/json)
+
+    + Attributes 
+        + message  (string)
+        
+    + Body
+
+            {
+                "message" : "Database error, could not find user/trips."
+            }
+            
+### Edit User [PATCH /{id}/edit]
++ Parameters
+    + id
+    
++ Attributes (User)
+
++ Response 200 (application/json)
     + Attributes (User)
     
 + Response 503 (application/json)
+
     + Attributes 
         + message  (string)
+        
     + Body
 
-            { "message" : "Could not retrieve the user." }
+            {
+                "message" : "Database error, can't find user."
+            }
+
++ Response 403 (application/json)
+
+    + Attributes 
+        +message (string)
+        
+    + Body
+
+            {
+                "message" : "Unauthorized request"
+            }
             
-+ Response 404 (application/json)
-    + Attributes 
-        + message  (string)
-    + Body
 
-            { "message" : "User not found." }
 
 # Group Trips
 
@@ -60,8 +187,344 @@ This is the documentation for our car-sharing API, Going2Campus.
             
     
 + Response 200 (application/json)
+
     + Attributes
         - trip (Trip)
+
++ Response 202 (application/json)
+
+    + Attributes
+        - message   (string)
+        
+    + Body
+
+            {
+                "message": "Car has no seats available."
+            }
+            
++ Response 400 (application/json)
+
+    + Attributes
+        - message   (string)
+        
+    + Body
+
+            {
+                "message": "Bad request, wrong attribute name."
+            }
+            
++ Response 403 (application/json)
+
+    + Attributes
+        - message   (string)
+        
+    + Body
+
+            {
+                "message": "Unauthorized Request."
+            }
+            
++ Response 503 (application/json)
+
+    + Attributes
+        - message   (string)
+        
+    + Body
+
+            {
+                "message": "We can't know if you are a user or not."
+            }
+
++ Response 404 (application/json)
+
+    + Attributes
+        - message   (string)
+        
+    + Body
+
+            {
+                "message": "This user does not exist."
+            }
+
++ Response 409 (application/json)
+
+    + Attributes
+        - message   (string)
+        
+    + Body
+
+            {
+                "message": "The user you tried to had is the driver of the trip/This user is already listed for this trip."
+            }
+
+### Accept Passenger [PATCH /trips/{id}/accept_passenger]
++ Request
+    + Body
+
+            {
+                "passengerId": "123456"
+            }
+    
++ Parameter
+    + id: `1` - The id of the trip
+            
+    
++ Response 200 (application/json)
+
+    + Attributes
+        - trip (Trip)
+
+
++ Response 202 (application/json)
+
+    + Attributes
+        - message   (string)
+        
+    + Body
+
+            {
+                "message": "Car has no seats available."
+            }
+                
++ Response 400 (application/json)
+
+    + Attributes
+        - message   (string)
+        
+    + Body
+
+            {
+                "message": "Bad request, wrong attribute name."
+            }
+
++ Response 503 (application/json)
+
+    + Attributes
+        - message   (string)
+        
+    + Body
+
+            {
+                "message": "We can't know if you are a user or not."
+            }
+            
++ Response 404 (application/json)
+
+    + Attributes
+        - message   (string)
+        
+    + Body
+
+            {
+                "message": "This user/trip does not exist."
+            }
+            
++ Response 403 (application/json)
+
+    + Attributes
+        - message   (string)
+        
+    + Body
+
+            {
+                "message": "Unauthorized Request."
+            }
+            
++ Response 409 (application/json)
+
+    + Attributes
+        - message   (string)
+        
+    + Body
+
+            {
+                "message": "User did not reserve this trip."
+            }
+            
+### Cancel Trip [PATCH /trips/{id}/cancel]
++ Request
+    + Body
+
+            {
+                "passengerId": "123456"
+            }
+    
++ Parameter
+    + id: `1` - The id of the trip
+            
+    
++ Response 200 (application/json)
+
+    + Attributes
+        - message (string)
+        
+    + Body
+    
+                {
+                    "message": "Trip Cancelled Successfully"
+                }  
+            
+            
++ Response 403 (application/json)
+
+    + Attributes
+        - message   (string)
+        
+    + Body
+
+            {
+                "message": "Unauthorized Request."
+            }
+            
++ Response 503 (application/json)
+
+    + Attributes
+        - message   (string)
+        
+    + Body
+
+            {
+                "message": "Something went wrong with the database."
+            }
+            
++ Response 404 (application/json)
+
+    + Attributes
+        - message   (string)
+        
+    + Body
+
+            {
+                "message": "Trip not found."
+            }
+
+### Reject Passenger [PATCH /trips/{id}/reject_passenger]
++ Request
+    + Body
+
+            {
+                "passengerId": "123456"
+            }
+    
++ Parameter
+    + id: `1` - The id of the trip
+            
+    
++ Response 200 (application/json)
+
+    + Attributes
+        - trip (Trip)
+
++ Response 403 (application/json)
+
+    + Attributes
+        - message   (string)
+        
+    + Body
+
+            {
+                "message": "Unauthorized Request."
+            }
+
++ Response 503 (application/json)
+
+    + Attributes
+        - message   (string)
+        
+    + Body
+
+            {
+                "message": "Error saving to database."
+            }
+
++ Response 409 (application/json)
+
+    + Attributes
+        - message   (string)
+        
+    + Body
+
+            {
+                "message": "User did not reserve this trip."
+            }
+
++ Response 404 (application/json)
+
+    + Attributes
+        - message   (string)
+        
+    + Body
+
+            {
+                "message": "Trip/User not found."
+            }
+
+### Cancel Reservation [PATCH /trips/{id}/cancel_reservation]
++ Request
+    + Body
+
+            {
+                "passengerId": "123456"
+            }
+    
++ Parameter
+    + id: `1` - The id of the trip
+            
+    
++ Response 200 (application/json)
+
+    + Attributes (Trip)
+        - message (string)
+
+    + Body
+    
+            {
+                "message": "Reservation cancelled."
+                "trip" : trip
+            }
++ Response 403 (application/json)
+
+    + Attributes
+        - message   (string)
+        
+    + Body
+
+            {
+                "message": "Unauthorized Request."
+            }
+
++ Response 503 (application/json)
+
+    + Attributes
+        - message   (string)
+        
+    + Body
+
+            {
+                "message": "Error saving to database."
+            }
+
++ Response 409 (application/json)
+
+    + Attributes
+        - message   (string)
+        
+    + Body
+
+            {
+                "message": "User did not reserve this trip."
+            }
+
++ Response 404 (application/json)
+
+    + Attributes
+        - message   (string)
+        
+    + Body
+
+            {
+                "message": "Trip/User not found."
+            }
 
 # Data Structures
 

@@ -56,7 +56,7 @@ router.route('/')
                     console.log(err);
                 }
 
-                res.json(trips);
+                res.status(200).json(trips);
 
             });
 
@@ -65,12 +65,11 @@ router.route('/')
 router.patch('/:id_trip/add_passenger', verifyToken, (req, res) => {
 
     if (!req.body.passengerId) {
-        res.status(400).send("Bad request, wrong attribute name.");
-        return;
+        return res.status(400).json({ message: "Bad request, wrong attribute name." });
     }
 
     if (req.body.passengerId != req.token_user_id && !req.token_admin) {
-        return res.status(403).json({ message: "Unauthorized Request" });
+        return res.status(403).json({ message: "Unauthorized Request." });
     }
 
     User.findById(req.body.passengerId, function (err, user) {
@@ -162,11 +161,11 @@ router.patch('/:id_trip/accept_passenger', verifyToken, (req, res) => {
 
         if (err) {
             console.log(err);
-            return res.status(503).send("Error retrieving data from database.");
+            return res.status(503).json({ message: "Error retrieving data from database."});
         }
 
         if (!trip) {
-            return res.status(404).send("404 Trip not found.");
+            return res.status(404).send({message :"Trip not found."});
         }
 
         if (trip.driver.id != req.token_user_id && !req.token_admin) {
