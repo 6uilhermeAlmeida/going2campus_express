@@ -183,4 +183,6 @@ router.get('/verify/:id_user/:verification_code', function (req, res) {
 
 });
 
+router.get('/reset/:id_user')
+
 module.exports = router;
