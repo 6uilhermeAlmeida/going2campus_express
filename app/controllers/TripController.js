@@ -347,4 +347,32 @@ router.patch('/:id_trip/cancel_reservation', verifyToken, (req, res) => {
 
 });
 
+router.get('/destination/radius/:lat/:lon/:radius', verifyToken, (req, res) => {
+
+    let estimatedRadiusInDegrees = req.params.radius / 111.19;
+
+    let minLat = Number(req.params.lat) - 1;
+    let maxLat = Number(req.params.lat) + 1;
+    
+    let minLon = Number(req.params.lon) - 1;
+    let maxLon = Number(req.params.lon) + 1;
+
+    Trip.find()
+    .where('destinationLatitude').gte(minLat).lte(maxLat)
+    .where('destinationLongitude').gte(minLon).lte(maxLon)
+    .populate('driver')
+    .populate('pendingPassengers')
+    .populate('passengers')
+    .exec(function (err, trips) {
+        if (err) {
+            console.log(err);
+            res.status(503).json({ message: "Error accessing database" });
+        }
+
+        res.status(200).json(trips);
+
+    });
+});
+
+
 module.exports = router;
