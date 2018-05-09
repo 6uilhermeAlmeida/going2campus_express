@@ -526,6 +526,73 @@ This is the documentation for our car-sharing API, Going2Campus.
                 "message": "Trip/User not found."
             }
 
+### Get Trips to a location [GET /trips/destination/{lat}/{lon}/{radius}']
++ Parameter
+    + lat: `13.24` - Latitude of the trip's destination
+    + lon: `19.24` - Longitude of the trip's destination
+    + radius: `1500` - Radius, in meters, to search for  
+    
++ Response 200 (application/json)
+
+    + Attributes (array[Trip])
+    
++ Response 503 (application/json)
+
+    + Attributes
+        - message   (string)
+        
+    + Body
+
+            {
+                "message": "Error saving to database."
+            }
+
+
+### Get Trips from a location [GET /trips/departure/{lat}/{lon}/{radius}']
++ Parameter
+    + lat: `13.24` - Latitude of the trip's departure
+    + lon: `19.24` - Longitude of the trip's departure
+    + radius: `1500` - Radius, in meters, to search for  
+    
++ Response 200 (application/json)
+
+    + Attributes (array[Trip])
+    
++ Response 503 (application/json)
+
+    + Attributes
+        - message   (string)
+        
+    + Body
+
+            {
+                "message": "Error saving to database."
+            }
+
+
+### Get Trips from a location to another location [GET /trips/from/{lat_departure}/{lon_departure}/to/{lat_destination}/{lon_destination}/{radius}']
++ Parameter
+    + lat_departure: `13.24` - Latitude of the trip's departure
+    + lon_departure: `19.24` - Longitude of the trip's departure
+    + lat_destination: `22.15` - Latitude of the trip's destination
+    + lon_destination: `18.15` - Longitude of the trip's destination
+    + radius: `1500` - Radius, in meters, to search for  
+    
++ Response 200 (application/json)
+
+    + Attributes (array[Trip])
+    
++ Response 503 (application/json)
+
+    + Attributes
+        - message   (string)
+        
+    + Body
+
+            {
+                "message": "Error saving to database."
+            }
+
 # Data Structures
 
 ## User(object)
