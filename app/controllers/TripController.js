@@ -347,19 +347,20 @@ router.patch('/:id_trip/cancel_reservation', verifyToken, (req, res) => {
 
 });
 
-router.get('/destination/radius/:lat/:lon/:radius', verifyToken, (req, res) => {
+router.get('/destination/:lat/:lon/:radius', verifyToken, (req, res) => {
 
-    let estimatedRadiusInDegrees = req.params.radius / 111.19;
+    let estimatedRadiusInDegrees = (req.params.radius / 1000) / 111;
 
-    let minLat = Number(req.params.lat) - 1;
-    let maxLat = Number(req.params.lat) + 1;
+    let minLat = Number(req.params.lat) - estimatedRadiusInDegrees;
+    let maxLat = Number(req.params.lat) + estimatedRadiusInDegrees;
     
-    let minLon = Number(req.params.lon) - 1;
-    let maxLon = Number(req.params.lon) + 1;
+    let minLon = Number(req.params.lon) - estimatedRadiusInDegrees;
+    let maxLon = Number(req.params.lon) + estimatedRadiusInDegrees;
 
     Trip.find()
     .where('destinationLatitude').gte(minLat).lte(maxLat)
     .where('destinationLongitude').gte(minLon).lte(maxLon)
+    .sort({'tripDate': 'asc'})
     .populate('driver')
     .populate('pendingPassengers')
     .populate('passengers')
@@ -373,6 +374,70 @@ router.get('/destination/radius/:lat/:lon/:radius', verifyToken, (req, res) => {
 
     });
 });
+
+router.get('/departure/:lat/:lon/:radius', verifyToken, (req, res) => {
+
+    let estimatedRadiusInDegrees = (req.params.radius / 1000) / 111;
+
+    let minLat = Number(req.params.lat) - estimatedRadiusInDegrees;
+    let maxLat = Number(req.params.lat) + estimatedRadiusInDegrees;
+    
+    let minLon = Number(req.params.lon) - estimatedRadiusInDegrees;
+    let maxLon = Number(req.params.lon) + estimatedRadiusInDegrees;
+
+    Trip.find()
+    .where('departureLatitude').gte(minLat).lte(maxLat)
+    .where('departureLongitude').gte(minLon).lte(maxLon)
+    .sort({'tripDate': 'asc'})
+    .populate('driver')
+    .populate('pendingPassengers')
+    .populate('passengers')
+    .exec(function (err, trips) {
+        if (err) {
+            console.log(err);
+            res.status(503).json({ message: "Error accessing database" });
+        }
+
+        res.status(200).json(trips);
+
+    });
+});
+
+router.get('/from/:lat_departure/:lon_departure/to/:lat_destination/:lon_destination/:radius', verifyToken, (req, res) => {
+
+    let estimatedRadiusInDegrees = (req.params.radius / 1000) / 111;
+
+    let minLatDeparture = Number(req.params.lat_departure) - estimatedRadiusInDegrees;
+    let maxLatDeparture = Number(req.params.lat_departure) + estimatedRadiusInDegrees;   
+    let minLonDeparture = Number(req.params.lon_departure) - estimatedRadiusInDegrees;
+    let maxLonDeparture = Number(req.params.lon_departure) + estimatedRadiusInDegrees;
+
+    let minLatDestination = Number(req.params.lat_destination) - estimatedRadiusInDegrees;
+    let maxLatDestination = Number(req.params.lat_destination) + estimatedRadiusInDegrees;   
+    let minLonDestination = Number(req.params.lon_destination) - estimatedRadiusInDegrees;
+    let maxLonDestination = Number(req.params.lon_destination) + estimatedRadiusInDegrees;
+
+    Trip.find()
+    .where('departureLatitude').gte(minLatDeparture).lte(maxLatDeparture)
+    .where('departureLongitude').gte(minLonDeparture).lte(maxLonDeparture)
+    .where('destinationLatitude').gte(minLatDestination).lte(maxLatDestination)
+    .where('destinationLongitude').gte(minLonDestination).lte(maxLonDestination)
+    .sort({'tripDate': 'asc'})
+    .populate('driver')
+    .populate('pendingPassengers')
+    .populate('passengers')
+    .exec(function (err, trips) {
+        if (err) {
+            console.log(err);
+            res.status(503).json({ message: "Error accessing database" });
+        }
+
+        res.status(200).json(trips);
+
+    });
+});
+
+
 
 
 module.exports = router;
