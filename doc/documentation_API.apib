@@ -9,6 +9,7 @@ This is the documentation for our car-sharing API, Going2Campus.
 
 ## User Collection [/users]
 
+
 ### Get All Users [GET]
 + Response 200 (application/json)
     + Attributes (array[User])
@@ -526,7 +527,7 @@ This is the documentation for our car-sharing API, Going2Campus.
                 "message": "Trip/User not found."
             }
 
-### Get Trips to a location [GET /trips/destination/{lat}/{lon}/{radius}']
+### Get Trips to a location [GET /trips/destination/{lat}/{lon}/{radius}]
 + Parameter
     + lat: `13.24` - Latitude of the trip's destination
     + lon: `19.24` - Longitude of the trip's destination
@@ -548,7 +549,7 @@ This is the documentation for our car-sharing API, Going2Campus.
             }
 
 
-### Get Trips from a location [GET /trips/departure/{lat}/{lon}/{radius}']
+### Get Trips from a location [GET /trips/departure/{lat}/{lon}/{radius}]
 + Parameter
     + lat: `13.24` - Latitude of the trip's departure
     + lon: `19.24` - Longitude of the trip's departure
@@ -570,7 +571,7 @@ This is the documentation for our car-sharing API, Going2Campus.
             }
 
 
-### Get Trips from a location to another location [GET /trips/from/{lat_departure}/{lon_departure}/to/{lat_destination}/{lon_destination}/{radius}']
+### Get Trips from a location to another location [GET /trips/from/{lat_departure}/{lon_departure}/to/{lat_destination}/{lon_destination}/{radius}]
 + Parameter
     + lat_departure: `13.24` - Latitude of the trip's departure
     + lon_departure: `19.24` - Longitude of the trip's departure
@@ -593,6 +594,85 @@ This is the documentation for our car-sharing API, Going2Campus.
                 "message": "Error saving to database."
             }
 
+## Auth Collection [/auth]
+
+### Register User [POST /register]
++ Request
+
+    + Body
+
+            {
+                "mail": "carlos@my.ipleiria.pt",
+                "password": "secret",
+                "name": "Carlos",
+                "birthDate": "24/4/1995"
+            }
++ Response 201 (application/json)
+
+    + Attributes (User)
+        - message   (string)
+        
+    + Body
+
+            {
+                "message": "We´ve sent a verification e-mail to carlos@my.ipleiria.pt."
+                    "user": {
+                        "rating": 0,
+                        "numberOfRates": 0,
+                        "preferences": [],
+                        "cancelIndex": 0,
+                        "admin": false,
+                        "active": false,
+                        "cancelCounter": 0,
+                        "_id": "5ae7994ef705a11fb054ab39",
+                        "name": "yo",
+                        "mail": "carlos@my.ipleiria.pt",
+                        "birthDate": "1995-04-24T00:00:00.000Z",
+                        "createdAt": "2018-04-30T22:31:42.357Z",
+                        "updatedAt": "2018-04-30T22:31:42.357Z",
+                        "__v": 0
+                    }
+            }
+
+### Login User [POST /login]
++ Request
+
+    + Body
+
+            {
+                "mail": "carlos@my.ipleiria.pt",
+                "password": "secret",
+            }
++ Response 200 (application/json)
+
+    + Attributes
+        - token (string)
+        - auth (boolean)
+        - user (User)
+    
+    + Body
+
+            {
+                "auth": true,
+                "token": 123123123123
+                "user": {
+                    "rating": 0,
+                    "numberOfRates": 0,
+                    "preferences": [],
+                    "cancelIndex": 0,
+                    "admin": false,
+                    "active": false,
+                    "cancelCounter": 0,
+                    "_id": "5ae7994ef705a11fb054ab39",
+                    "name": "yo",
+                    "mail": "carlos@my.ipleiria.pt",
+                    "birthDate": "1995-04-24T00:00:00.000Z",
+                    "createdAt": "2018-04-30T22:31:42.357Z",
+                    "updatedAt": "2018-04-30T22:31:42.357Z",
+                    "__v": 0
+                }
+            }
+            
 # Data Structures
 
 ## User(object)
