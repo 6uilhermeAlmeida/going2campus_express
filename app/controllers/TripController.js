@@ -471,22 +471,24 @@ router.patch('/:id_trip/rate', verifyToken, function (req, res) {
 
                     });
 
+                    user.save(function (err) {
+
+                        if (err) {
+        
+                            //*NIKE SLOGAN*
+                            console.log(err);
+                            return res.status(503).json({ message: "Something went wrong with our database." });
+        
+                        }
+        
+                        //HOORAY!
+                        return res.status(200).json({ message: "Your rates were saved!" });
+        
+                    });
+
                 });
 
-            user.save(function (err) {
-
-                if (err) {
-
-                    //*NIKE SLOGAN*
-                    console.log(err);
-                    return res.status(503).json({ message: "Something went wrong with our database." });
-
-                }
-
-                //HOORAY!
-                return res.status(200).json({ message: "Your rates were saved!" });
-
-            });
+            
 
         });
 
