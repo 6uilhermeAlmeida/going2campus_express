@@ -1,12 +1,12 @@
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
-var postExcept = ['stoppingAdresses', 'pendingPassengers', 'passengers', 'status'];
+var postExcept = ['stoppingAddresses', 'pendingPassengers', 'passengers', 'status'];
 
 var TripSchema = new Schema({
 
-    departureAdress: { type: String, required: [true, "departureAdress is required."] },
-    destinationAdress: { type: String, required: [true, "destinationAdress is required."] },
+    departureAddress: { type: String, required: [true, "departureAddress is required."] },
+    destinationAddress: { type: String, required: [true, "destinationAddress is required."] },
     departureLatitude: { type: Number, required: [true, "departureLatitude is required."] },
     departureLongitude: { type: Number, required: [true, "departureLongitude is required."] },
     destinationLatitude: { type: Number, required: [true, "destinationLatitude is required."] },
@@ -29,7 +29,7 @@ var TripSchema = new Schema({
     isFromCampus: { type: Boolean, required: [true, "isFromCampus is required, true or false."] },
     passengers: [{ type: Schema.Types.ObjectId, ref: 'User' }],
     status: { type: String, enum: ['LISTED', 'ONGOING', 'FINISHED', 'CANCELED'], default: 'LISTED' },
-    stoppingAdresses: [String],
+    stoppingAddresses: [String],
     autoAccept: { type: Boolean, required: [true, "autoAccept is required."] },
     pendingPassengers: [{ type: Schema.Types.ObjectId, ref: 'User' }]
 
@@ -49,7 +49,6 @@ TripSchema.statics.postMiddleware = function (req, res, next) {
     next();
 
 };
-
 
 
 module.exports = mongoose.model('Trip', TripSchema);

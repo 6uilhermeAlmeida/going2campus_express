@@ -415,7 +415,6 @@ router.patch('/:id_trip/rate', verifyToken, function (req, res) {
             }
 
             //Save this rate!
-
             var evaluated = user.id;
             var evaluator = req.token_user_id;
             var givenRate = req.body.rate;
@@ -450,7 +449,7 @@ router.patch('/:id_trip/rate', verifyToken, function (req, res) {
 
                     } else {
 
-                        user.rating = ((user.numberOfRates * user.rating) + givenRate - rate.rate) / (user.numberOfRates + 1);
+                        user.rating = ((user.numberOfRates * user.rating) + givenRate - rate.rate) / (user.numberOfRates);
 
                     }
 
