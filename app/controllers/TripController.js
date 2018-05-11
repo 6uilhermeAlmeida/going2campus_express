@@ -28,18 +28,18 @@ router.route('/')
                 }
 
                 if (errors) {
-                    res.status(400).json({
+                    return res.status(400).json({
                         errors: errors
                     });
                 } else {
 
-                    res.status(503).json({ message: "Database error." });
+                    return res.status(503).json({ message: "Database error." });
 
                 }
 
             }
 
-            res.status(200).json(trip);
+            return res.status(200).json(trip);
 
         });
 
