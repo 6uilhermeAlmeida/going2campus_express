@@ -106,6 +106,7 @@ router.get('/:id_user/past_trips', function (req, res) {
 
     Trip.find({ $or: [{ 'driver': req.params.id_user }, { 'passengers': req.params.id_user }] })
         .where('status').in(['FINISHED', 'CANCELED'])
+        .sort({'tripDate': 'asc'})
         .populate("driver")
         .populate("passengers")
         .populate("pendingPassengers")
@@ -131,6 +132,7 @@ router.get('/:id_user/future_trips', function (req, res) {
 
     Trip.find({ $or: [{ 'driver': req.params.id_user }, { 'passengers': req.params.id_user }] })
         .where('status').in(['LISTED', 'ONGOING'])
+        .sort({'tripDate': 'asc'})
         .populate("driver")
         .populate("passengers")
         .populate("pendingPassengers")
