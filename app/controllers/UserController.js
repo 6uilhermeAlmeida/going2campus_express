@@ -93,7 +93,7 @@ router.get('/:id_user/trips/driver', function (req, res) {
 
 });
 
-router.get('/:id_user/trips', function (req, res) {
+router.get('/:id_user/past_trips', function (req, res) {
 
     User.findById(req.params.id_user, function (err, user) {
         if (err) {
@@ -105,6 +105,32 @@ router.get('/:id_user/trips', function (req, res) {
     });
 
     Trip.find({ $or: [{ 'driver': req.params.id_user }, { 'passengers': req.params.id_user }] })
+        .where('status').in(['FINISHED', 'CANCELED'])
+        .populate("driver")
+        .populate("passengers")
+        .populate("pendingPassengers")
+        .exec(function (err, trips) {
+            if (err) return res.status(503).json({ message: "Database error, could not find trips." , error: err});
+
+            res.status(200).json(trips);
+
+        });
+
+});
+
+router.get('/:id_user/future_trips', function (req, res) {
+
+    User.findById(req.params.id_user, function (err, user) {
+        if (err) {
+            console.log(err);
+            return res.status(503).json({ message: "Database error, can´t find user." });
+        }
+
+        if (!user) return res.status(404).json({ message: "User not found." });
+    });
+
+    Trip.find({ $or: [{ 'driver': req.params.id_user }, { 'passengers': req.params.id_user }] })
+        .where('status').in(['LISTED', 'ONGOING'])
         .populate("driver")
         .populate("passengers")
         .populate("pendingPassengers")
@@ -167,7 +193,7 @@ router.patch('/:id_user/change_password', verifyToken, function (req, res) {
 
         if (!user) {
             //If you are an admin, this will warn you about a non found user, if you're not, this was already checked in the middleware!
-            return res.status(404).json({ message: "This user was not found." })
+            return res.status(404).json({ message: "This user was not found." });
 
         } 
 
