@@ -368,7 +368,7 @@ router.patch('/:id_trip/rate', verifyToken, function (req, res) {
 
         }
 
-        if (trip.passengers.indexOf(req.body.user) < 0 && trip.driver != req.body.user) {
+        if (trip.pendingPassengers.indexOf(req.body.user) < 0 && trip.driver != req.body.user) {
 
             //Bad request! The user sent does not belong to this trip.
             return res.status(404).json({ message: "Make sure the user belongs to this trip!" });
