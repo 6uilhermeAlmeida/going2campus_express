@@ -71,7 +71,7 @@ router.post('/register', function (req, res) {
                 }
 
                 var template = html;
-                var rendered = Mustache.render(template, {user: user , action_url : config.host + 'api/auth/verify/' + user.id + '/' + sha256(String(user.id + user.createdAt.getTime() + config.secret))});
+                var rendered = Mustache.render(template, { user: user, action_url: config.host + 'api/auth/verify/' + user.id + '/' + sha256(String(user.id + user.createdAt.getTime() + config.secret)) });
 
                 const mailOptions = {
                     from: config.mail_user, // sender address
@@ -121,15 +121,15 @@ router.post('/login', (req, res) => {
             token_user_id: user._id,
             token_admin: user.admin
         }, config.secret, {
-            expiresIn: 2628000 // one month in seconds
-        });
+                expiresIn: 2628000 // one month in seconds
+            });
 
         user.password = undefined;
 
         res.status(200).send({
             auth: true,
             token: token,
-            user : user
+            user: user
         });
     });
 });
@@ -183,6 +183,78 @@ router.get('/verify/:id_user/:verification_code', function (req, res) {
 
 });
 
-router.get('/reset/:id_user')
+router.get('/reset', function (req, res) {
+
+    if (!req.query.email) {
+        return res.status(400).json({ message: "Missing query 'email'." });
+    }
+
+    var password = sha256(req.query.email + (new Date).getTime() + config.secret);
+    var passwordHashed = bcrypt.hashSync(password);
+
+    User.findOneAndUpdate({ mail: req.query.email }, { password: passwordHashed }, { new: true }, function (err, user) {
+
+
+        if (err) {
+            //Log those database errors!
+            console.log(err);
+            return res.status(503).json({ message: "A problem occurred with the database." });
+
+        }
+
+        if (!user) {
+
+            return res.status(404).json({ message: "This user was not found." })
+
+        }
+
+        var transporter = mailer.createTransport({
+            service: 'gmail',
+            auth: {
+                user: config.mail_user,
+                pass: config.mail_password
+            }
+        });
+
+
+        fs.readFile('app/config/mail_password.html', 'utf8', function (err, html) {
+
+            if (err) {
+                console.log(err);
+            }
+
+            var template = html;
+            var rendered = Mustache.render(template,
+                {
+                    user: user,
+                    newPassword : password 
+
+                });
+
+            const mailOptions = {
+                from: config.mail_user, // sender address
+                to: user.mail, // list of receivers
+                subject: 'Password recovery', // Subject line
+                html: rendered
+
+            };
+
+            transporter.sendMail(mailOptions, function (err, info) {
+                if (err) {
+                    
+                    console.log(err);
+                    
+                } else {
+
+                    res.status(200).json({message : "Mail sent with a new password."});
+
+                }
+            });
+
+        });
+
+    })
+
+});
 
 module.exports = router;
