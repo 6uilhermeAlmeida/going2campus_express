@@ -28,18 +28,18 @@ router.route('/')
                 }
 
                 if (errors) {
-                    res.status(400).json({
+                    return res.status(400).json({
                         errors: errors
                     });
                 } else {
 
-                    res.status(503).json({ message: "Database error." });
+                    return res.status(503).json({ message: "Database error." });
 
                 }
 
             }
 
-            res.status(200).json(trip);
+            return res.status(200).json(trip);
 
         });
 
@@ -415,7 +415,6 @@ router.patch('/:id_trip/rate', verifyToken, function (req, res) {
             }
 
             //Save this rate!
-
             var evaluated = user.id;
             var evaluator = req.token_user_id;
             var givenRate = req.body.rate;
@@ -450,7 +449,7 @@ router.patch('/:id_trip/rate', verifyToken, function (req, res) {
 
                     } else {
 
-                        user.rating = ((user.numberOfRates * user.rating) + givenRate - rate.rate) / (user.numberOfRates + 1);
+                        user.rating = ((user.numberOfRates * user.rating) + givenRate - rate.rate) / (user.numberOfRates);
 
                     }
 
