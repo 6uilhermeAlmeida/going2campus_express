@@ -24,12 +24,24 @@ mongoose.connection
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
-app.use(function(req, res, next) {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Headers", "Content-Type, x-access-token");
-  res.header("Access-Control-Allow-Methods","*");
-  next();
+app.use(function (req, res, next) {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "Content-Type, x-access-token");
+    res.header("Access-Control-Allow-Methods", "*");
+    next();
 });
+
+app.use(function (err, req, res, next) {
+
+    if (err) {
+        console.log(err)
+        return res.status(err.statusCode).json({ message: err.type });
+    }
+
+    next();
+
+
+})
 
 var port = process.env.PORT || 8080;        // set our port
 
