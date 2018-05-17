@@ -230,6 +230,59 @@ router.patch('/:id_user/change_password', verifyToken, function (req, res) {
 
     });
 
+    router.patch('/:id_user/block', verifyToken, function (req, res) {
+        
+        //check if the request belongs to an admin
+        if (!req.token_admin) {
+            
+            return res.status(403).json({message : "Forbidden, only admins can block users."});
+        }
+
+        User.findById(req.params.id_user, function (err, user) {
+            
+            if (err) {
+                //Log DB errors.
+                console.log(err);
+                return res.status(503).json({message : "Database error"});
+            }
+
+            if (!user) {
+                //Not found
+                return res.status(404).json({message : "This user was not found!"});
+            }
+
+            user.blocked = true;
+
+            Trip.updateMany({driver : req.params.id_user}, {status : 'CANCELED'}, function (err, trips) {
+                
+                if (err) {
+                    //Log DB errors.
+                    console.log(err);
+                    return res.status(503).json({message : "Database error"});
+                }
+
+            });
+
+            user.save(function (err) {
+
+                if (err) {
+                    //Log DB errors.
+                    console.log(err);
+                    return res.status(503).json({message : "Database error"});
+                }
+
+                return res.status(200).json({message : "User blocked with success."});
+
+            });
+
+        });
+
+
+
+
+
+    });
+
 
 
 

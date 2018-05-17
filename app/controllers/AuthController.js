@@ -119,7 +119,6 @@ router.post('/login', (req, res) => {
 
         var token = jwt.sign({
             token_user_id: user._id,
-            token_admin: user.admin
         }, config.secret, {
                 expiresIn: 2628000 // one month in seconds
             });

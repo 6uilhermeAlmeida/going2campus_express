@@ -3,6 +3,7 @@ var config = require('../config/config.js');
 var User = require('../models/user');
 
 function verifyToken(req, res, next) {
+
   if (req.method === "OPTIONS") {
     next();
   }
@@ -17,6 +18,7 @@ function verifyToken(req, res, next) {
   }
 
   jwt.verify(token, config.secret, function (err, decoded) {
+
     if (err) {
       return res.status(500).send({
         auth: false,
@@ -25,16 +27,24 @@ function verifyToken(req, res, next) {
     }
 
     req.token_user_id = decoded.token_user_id;
-    req.token_admin = decoded.token_admin;
 
     User.findById(req.token_user_id, function (err, user) {
 
       if (err) return res.status(503).json({
         message: "We can´t know if you are a user or not."
       });
+
       if (!user) return res.status(403).json({
         message: "You are no longer a user, register to join us again!"
       });
+
+      if (user.blocked) {
+        return res.status(403).json({
+          message : "You have been blocked from our service."
+        });
+      }
+
+      req.token_admin = user.admin
 
       next();
     });

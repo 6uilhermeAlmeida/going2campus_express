@@ -24,6 +24,7 @@ var UserSchema = new Schema({
     //trips: { type: [String], select: false },
     admin: { type: Boolean, default: false },
     active: { type: Boolean, default: false },
+    blocked: { type: Boolean, default: false },
     cancelCounter: { type: Number, default: 0 }
 },
 
