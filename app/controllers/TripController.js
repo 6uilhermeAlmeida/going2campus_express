@@ -86,9 +86,9 @@ router.patch('/:id_trip/add_passenger', verifyToken, (req, res) => {
     });
 
     Trip.findById(req.params.id_trip)
-        .populate("driver")
-        .populate("pendingPassengers")
-        .populate("passengers")
+        .populate('driver')
+        .populate('pendingPassengers')
+        .populate('passengers')
         .exec(function (err, trip) {
 
             if (err) {
@@ -550,7 +550,7 @@ router.get('/departure/:lat/:lon/:radius', verifyToken, (req, res) => {
     });
 });
 
-router.get('/from/:lat_departure/:lon_departure/to/:lat_destination/:lon_destination/:radius', verifyToken, (req, res) => {
+router.get('/from/:lat_departure/:lon_departure/to/:lat_destination/:lon_destination/:radius/:day/:month', verifyToken, (req, res) => {
 
     let estimatedRadiusInDegrees = (req.params.radius / 1000) / 111;
 

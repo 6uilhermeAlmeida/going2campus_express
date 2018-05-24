@@ -30,7 +30,7 @@ router.get('/me', function (req, res, next) {
 
         if (err) return res.status(500).json({ message: "There was a problem finding the user." });
 
-        if (!user) return res.status(404).json({message: "No user found"});
+        if (!user) return res.status(404).json({ message: "No user found" });
 
         res.status(200).send(user);
     });
@@ -65,8 +65,6 @@ router.delete('/:id_user', function (req, res, next) {
 
 
     });
-
-
 
 });
 
@@ -106,12 +104,13 @@ router.get('/:id_user/past_trips', function (req, res) {
 
     Trip.find({ $or: [{ 'driver': req.params.id_user }, { 'passengers': req.params.id_user }] })
         .where('status').in(['FINISHED', 'CANCELED'])
-        .sort({'tripDate': 'asc'})
+        .where('tripDate').lt(new Date())
+        .sort({ 'tripDate': 'asc' })
         .populate("driver")
         .populate("passengers")
         .populate("pendingPassengers")
         .exec(function (err, trips) {
-            if (err) return res.status(503).json({ message: "Database error, could not find trips." , error: err});
+            if (err) return res.status(503).json({ message: "Database error, could not find trips.", error: err });
 
             res.status(200).json(trips);
 
@@ -132,7 +131,8 @@ router.get('/:id_user/future_trips', function (req, res) {
 
     Trip.find({ $or: [{ 'driver': req.params.id_user }, { 'passengers': req.params.id_user }] })
         .where('status').in(['LISTED', 'ONGOING'])
-        .sort({'tripDate': 'asc'})
+        .where('tripDate').gt(new Date())
+        .sort({ 'tripDate': 'asc' })
         .populate("driver")
         .populate("passengers")
         .populate("pendingPassengers")
@@ -197,81 +197,109 @@ router.patch('/:id_user/change_password', verifyToken, function (req, res) {
             //If you are an admin, this will warn you about a non found user, if you're not, this was already checked in the middleware!
             return res.status(404).json({ message: "This user was not found." });
 
-        } 
+        }
 
-            //Compare the old password with the hash stored in the database. 
-            if (bcrypt.compareSync(req.body.oldPassword, user.password)) {
+        //Compare the old password with the hash stored in the database. 
+        if (bcrypt.compareSync(req.body.oldPassword, user.password)) {
 
-                //true, confirmed!
-                //Hash the new password!
-                user.password = bcrypt.hashSync(req.body.newPassword);
+            //true, confirmed!
+            //Hash the new password!
+            user.password = bcrypt.hashSync(req.body.newPassword);
 
-            } else {
+        } else {
 
-                //false, returned!
-                return res.status(403).json({ message: "Forbidden. Wrong credentials." });
+            //false, returned!
+            return res.status(403).json({ message: "Forbidden. Wrong credentials." });
 
+        }
+
+        //At this point everything is OK, let us save this user!
+        user.save(function (err) {
+
+            if (err) {
+                //LOG THEM DB ERRORS!
+                console.log(err);
+                return res.status(503).json({ message: "A problem occurred with the database." });
             }
 
-            //At this point everything is OK, let us save this user!
-            user.save(function (err) {
+            //HOORAY!
+            return res.status(200).json({ message: "Password changed successfully" });
 
-                if (err) {
-                    //LOG THEM DB ERRORS!
-                    console.log(err);
-                    return res.status(503).json({ message: "A problem occurred with the database." });
-                }
-
-                //HOORAY!
-                return res.status(200).json({ message: "Password changed successfully" });
-
-            });
+        });
 
 
     });
 
     router.patch('/:id_user/block', verifyToken, function (req, res) {
-        
+
         //check if the request belongs to an admin
         if (!req.token_admin) {
-            
-            return res.status(403).json({message : "Forbidden, only admins can block users."});
+
+            return res.status(403).json({ message: "Forbidden, only admins can block users." });
         }
 
         User.findById(req.params.id_user, function (err, user) {
-            
+
             if (err) {
                 //Log DB errors.
                 console.log(err);
-                return res.status(503).json({message : "Database error"});
+                return res.status(503).json({ message: "Database error" });
             }
 
             if (!user) {
                 //Not found
-                return res.status(404).json({message : "This user was not found!"});
+                return res.status(404).json({ message: "This user was not found!" });
             }
 
             user.blocked = true;
 
-            Trip.updateMany({driver : req.params.id_user}, {status : 'CANCELED'}, function (err, trips) {
-                
-                if (err) {
-                    //Log DB errors.
-                    console.log(err);
-                    return res.status(503).json({message : "Database error"});
-                }
+            Trip.updateMany({
 
-            });
+                driver: req.params.id_user,
+                status: 'LISTED'
+            },
+                {
+                    status: 'CANCELED'
+
+                }, function (err, trips) {
+
+                    if (err) {
+                        //Log DB errors.
+                        console.log(err);
+                        return res.status(503).json({ message: "Database error" });
+                    }
+
+                });
+
+            Trip.updateMany({
+
+                passengers: req.params.id_user,
+                status: 'LISTED'
+            },
+                {
+                    '$pull' : {passengers : req.params.id_user}
+
+                }, function (err, trips) {
+
+                    if (err) {
+                        //Log DB errors.
+                        console.log(err);
+                        return res.status(503).json({ message: "Database error" });
+                    }
+
+                });
+
+
 
             user.save(function (err) {
 
                 if (err) {
                     //Log DB errors.
                     console.log(err);
-                    return res.status(503).json({message : "Database error"});
+                    return res.status(503).json({ message: "Database error" });
                 }
 
-                return res.status(200).json({message : "User blocked with success."});
+                return res.status(200).json({ message: "User blocked with success." });
 
             });
 
