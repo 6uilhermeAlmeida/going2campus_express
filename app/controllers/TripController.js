@@ -47,19 +47,121 @@ router.route('/')
 
     .get(function (req, res) {
 
-        Trip.find()
-            .populate('driver')
-            .populate('pendingPassengers')
-            .populate('passengers')
-            .exec(function (err, trips) {
+        var oneMeterToCoordinates = 0.000009 * 0.001
+        var radius = 200 * oneMeterToCoordinates
 
-                if (err) {
-                    console.log(err);
-                }
 
-                res.status(200).json(trips);
+        if (req.query) {
 
-            });
+            var placeholder = new Trip(req.query)
+            var error = placeholder.validateSync()
+
+            if (error.errors.length > 0) {
+                return res.status(400).json(error.errors);
+            }
+
+            if (req.query.radius) {
+                radius = Number(req.query.radius) * oneMeterToCoordinates;
+            }
+
+            var query = Trip.find();
+
+            if (req.query.departureAddress) {
+
+                query
+                    .where('departureAddress')
+                    .regex(new RegExp(req.query.departureAddress, 'i'))
+
+            }
+
+            if (req.query.destinationAddress) {
+
+                query
+                    .where('destinationAddress')
+                    .regex(new RegExp(req.query.destinationAddress, 'i'))
+
+            }
+
+            if (req.query.tripDate) {
+
+                var tripDate = new Date(req.query.tripDate)
+                var tripDateNextDay = new Date().setDate(tripDate.getDate() + 1)
+
+                query
+                    .where('tripDate')
+                    .gte(tripDate)
+                    .lte(tripDateNextDay)
+
+            }
+
+            if (req.query.numberOfSeatsAvailable) {
+
+                query
+                    .where('numberOfSeatsAvailable')
+                    .gte(req.query.numberOfSeatsAvailable)
+
+            }
+
+            if (req.query.isFromCampus) {
+
+                query
+                    .where('isFromCampus')
+                    .equals(req.query.isFromCampus)
+
+            }
+
+            if (req.query.departureLatitude) {
+                
+                query
+                    .where('departureLatitude')
+                    .gte(Number(req.query.departureLatitude) - radius)
+                    .lte(Number(req.query.departureLatitude) + radius)
+
+            }
+
+            if (req.query.departureLongitude) {
+                
+                query
+                    .where('departureLongitude')
+                    .gte(Number(req.query.departureLongitude) - radius)
+                    .lte(Number(req.query.departureLongitude) + radius)
+
+            }
+
+            if (req.query.destinationLatitude) {
+                
+                query
+                    .where('destinationLatitude')
+                    .gte(Number(req.query.destinationLatitude) - radius)
+                    .lte(Number(req.query.destinationLatitude) + radius)
+
+            }
+
+            if (req.query.destinationLongitude) {
+                
+                query
+                    .where('destinationLongitude')
+                    .gte(Number(req.query.destinationLongitude) - radius)
+                    .lte(Number(req.query.destinationLongitude) + radius)
+
+            }
+
+            query
+                .populate('driver')
+                .populate('pendingPassengers')
+                .populate('passengers')
+                .sort({ 'tripDate': 'asc' })
+                .exec(function (err, trips) {
+                    if (err) {
+                        console.log(err)
+                        return res.status(503).json({ message: "Database error." });
+
+                    } else {
+                        return res.json(trips);
+                    }
+                })
+
+        }
 
     });
 
@@ -162,11 +264,11 @@ router.patch('/:id_trip/accept_passenger', verifyToken, (req, res) => {
 
         if (err) {
             console.log(err);
-            return res.status(503).json({ message: "Error retrieving data from database."});
+            return res.status(503).json({ message: "Error retrieving data from database." });
         }
 
         if (!trip) {
-            return res.status(404).send({message :"Trip not found."});
+            return res.status(404).send({ message: "Trip not found." });
         }
 
         if (trip.driver.id != req.token_user_id && !req.token_admin) {
@@ -382,8 +484,8 @@ router.patch('/:id_trip/rate', verifyToken, function (req, res) {
         }
 
         if (req.body.rate < 0 && req.body.rate > 5) {
-            
-            return res.status(400).json({ message: "Rate must be between 0 and 5."});
+
+            return res.status(400).json({ message: "Rate must be between 0 and 5." });
         }
 
 
@@ -441,7 +543,7 @@ router.patch('/:id_trip/rate', verifyToken, function (req, res) {
                         rate.evaluated = evaluated;
                         rate.evaluator = evaluator;
                         rate.trip = trip.id;
-                        
+
                         //Facebook algorithm here. 
                         user.rating = ((user.numberOfRates * user.rating) + givenRate) / (user.numberOfRates + 1);
                         user.numberOfRates++;
@@ -472,21 +574,21 @@ router.patch('/:id_trip/rate', verifyToken, function (req, res) {
                     user.save(function (err) {
 
                         if (err) {
-        
+
                             //*NIKE SLOGAN*
                             console.log(err);
                             return res.status(503).json({ message: "Something went wrong with our database." });
-        
+
                         }
-        
+
                         //HOORAY!
                         return res.status(200).json({ message: "Your rates were saved!" });
-        
+
                     });
 
                 });
 
-            
+
 
         });
 
@@ -500,26 +602,26 @@ router.get('/destination/:lat/:lon/:radius', verifyToken, (req, res) => {
 
     let minLat = Number(req.params.lat) - estimatedRadiusInDegrees;
     let maxLat = Number(req.params.lat) + estimatedRadiusInDegrees;
-    
+
     let minLon = Number(req.params.lon) - estimatedRadiusInDegrees;
     let maxLon = Number(req.params.lon) + estimatedRadiusInDegrees;
 
     Trip.find()
-    .where('destinationLatitude').gte(minLat).lte(maxLat)
-    .where('destinationLongitude').gte(minLon).lte(maxLon)
-    .sort({'tripDate': 'asc'})
-    .populate('driver')
-    .populate('pendingPassengers')
-    .populate('passengers')
-    .exec(function (err, trips) {
-        if (err) {
-            console.log(err);
-            res.status(503).json({ message: "Error accessing database" });
-        }
+        .where('destinationLatitude').gte(minLat).lte(maxLat)
+        .where('destinationLongitude').gte(minLon).lte(maxLon)
+        .sort({ 'tripDate': 'asc' })
+        .populate('driver')
+        .populate('pendingPassengers')
+        .populate('passengers')
+        .exec(function (err, trips) {
+            if (err) {
+                console.log(err);
+                res.status(503).json({ message: "Error accessing database" });
+            }
 
-        res.status(200).json(trips);
+            res.status(200).json(trips);
 
-    });
+        });
 });
 
 router.get('/departure/:lat/:lon/:radius', verifyToken, (req, res) => {
@@ -528,26 +630,26 @@ router.get('/departure/:lat/:lon/:radius', verifyToken, (req, res) => {
 
     let minLat = Number(req.params.lat) - estimatedRadiusInDegrees;
     let maxLat = Number(req.params.lat) + estimatedRadiusInDegrees;
-    
+
     let minLon = Number(req.params.lon) - estimatedRadiusInDegrees;
     let maxLon = Number(req.params.lon) + estimatedRadiusInDegrees;
 
     Trip.find()
-    .where('departureLatitude').gte(minLat).lte(maxLat)
-    .where('departureLongitude').gte(minLon).lte(maxLon)
-    .sort({'tripDate': 'asc'})
-    .populate('driver')
-    .populate('pendingPassengers')
-    .populate('passengers')
-    .exec(function (err, trips) {
-        if (err) {
-            console.log(err);
-            res.status(503).json({ message: "Error accessing database" });
-        }
+        .where('departureLatitude').gte(minLat).lte(maxLat)
+        .where('departureLongitude').gte(minLon).lte(maxLon)
+        .sort({ 'tripDate': 'asc' })
+        .populate('driver')
+        .populate('pendingPassengers')
+        .populate('passengers')
+        .exec(function (err, trips) {
+            if (err) {
+                console.log(err);
+                res.status(503).json({ message: "Error accessing database" });
+            }
 
-        res.status(200).json(trips);
+            res.status(200).json(trips);
 
-    });
+        });
 });
 
 router.get('/from/:lat_departure/:lon_departure/to/:lat_destination/:lon_destination/:radius/:day/:month', verifyToken, (req, res) => {
@@ -555,33 +657,33 @@ router.get('/from/:lat_departure/:lon_departure/to/:lat_destination/:lon_destina
     let estimatedRadiusInDegrees = (req.params.radius / 1000) / 111;
 
     let minLatDeparture = Number(req.params.lat_departure) - estimatedRadiusInDegrees;
-    let maxLatDeparture = Number(req.params.lat_departure) + estimatedRadiusInDegrees;   
+    let maxLatDeparture = Number(req.params.lat_departure) + estimatedRadiusInDegrees;
     let minLonDeparture = Number(req.params.lon_departure) - estimatedRadiusInDegrees;
     let maxLonDeparture = Number(req.params.lon_departure) + estimatedRadiusInDegrees;
 
     let minLatDestination = Number(req.params.lat_destination) - estimatedRadiusInDegrees;
-    let maxLatDestination = Number(req.params.lat_destination) + estimatedRadiusInDegrees;   
+    let maxLatDestination = Number(req.params.lat_destination) + estimatedRadiusInDegrees;
     let minLonDestination = Number(req.params.lon_destination) - estimatedRadiusInDegrees;
     let maxLonDestination = Number(req.params.lon_destination) + estimatedRadiusInDegrees;
 
     Trip.find()
-    .where('departureLatitude').gte(minLatDeparture).lte(maxLatDeparture)
-    .where('departureLongitude').gte(minLonDeparture).lte(maxLonDeparture)
-    .where('destinationLatitude').gte(minLatDestination).lte(maxLatDestination)
-    .where('destinationLongitude').gte(minLonDestination).lte(maxLonDestination)
-    .sort({'tripDate': 'asc'})
-    .populate('driver')
-    .populate('pendingPassengers')
-    .populate('passengers')
-    .exec(function (err, trips) {
-        if (err) {
-            console.log(err);
-            res.status(503).json({ message: "Error accessing database" });
-        }
+        .where('departureLatitude').gte(minLatDeparture).lte(maxLatDeparture)
+        .where('departureLongitude').gte(minLonDeparture).lte(maxLonDeparture)
+        .where('destinationLatitude').gte(minLatDestination).lte(maxLatDestination)
+        .where('destinationLongitude').gte(minLonDestination).lte(maxLonDestination)
+        .sort({ 'tripDate': 'asc' })
+        .populate('driver')
+        .populate('pendingPassengers')
+        .populate('passengers')
+        .exec(function (err, trips) {
+            if (err) {
+                console.log(err);
+                res.status(503).json({ message: "Error accessing database" });
+            }
 
-        res.status(200).json(trips);
+            res.status(200).json(trips);
 
-    });
+        });
 });
 
 
