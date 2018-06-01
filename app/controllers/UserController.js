@@ -229,69 +229,40 @@ router.patch('/:id_user/change_password', verifyToken, function (req, res) {
 
 
     });
+});
 
-    router.patch('/:id_user/block', verifyToken, function (req, res) {
+router.patch('/:id_user/block', verifyToken, function (req, res) {
 
-        //check if the request belongs to an admin
-        if (!req.token_admin) {
+    //check if the request belongs to an admin
+    if (!req.token_admin) {
 
-            return res.status(403).json({ message: "Forbidden, only admins can block users." });
+        return res.status(403).json({ message: "Forbidden, only admins can block users." });
+    }
+
+    User.findById(req.params.id_user, function (err, user) {
+
+        if (err) {
+            //Log DB errors.
+            console.log(err);
+            return res.status(503).json({ message: "Database error" });
         }
 
-        User.findById(req.params.id_user, function (err, user) {
+        if (!user) {
+            //Not found
+            return res.status(404).json({ message: "This user was not found!" });
+        }
 
-            if (err) {
-                //Log DB errors.
-                console.log(err);
-                return res.status(503).json({ message: "Database error" });
-            }
+        user.blocked = true;
 
-            if (!user) {
-                //Not found
-                return res.status(404).json({ message: "This user was not found!" });
-            }
+        Trip.updateMany({
 
-            user.blocked = true;
+            driver: req.params.id_user,
+            status: 'LISTED'
+        },
+            {
+                status: 'CANCELED'
 
-            Trip.updateMany({
-
-                driver: req.params.id_user,
-                status: 'LISTED'
-            },
-                {
-                    status: 'CANCELED'
-
-                }, function (err, trips) {
-
-                    if (err) {
-                        //Log DB errors.
-                        console.log(err);
-                        return res.status(503).json({ message: "Database error" });
-                    }
-
-                });
-
-            Trip.updateMany({
-
-                passengers: req.params.id_user,
-                status: 'LISTED'
-            },
-                {
-                    '$pull' : {passengers : req.params.id_user}
-
-                }, function (err, trips) {
-
-                    if (err) {
-                        //Log DB errors.
-                        console.log(err);
-                        return res.status(503).json({ message: "Database error" });
-                    }
-
-                });
-
-
-
-            user.save(function (err) {
+            }, function (err, trips) {
 
                 if (err) {
                     //Log DB errors.
@@ -299,22 +270,64 @@ router.patch('/:id_user/change_password', verifyToken, function (req, res) {
                     return res.status(503).json({ message: "Database error" });
                 }
 
-                return res.status(200).json({ message: "User blocked with success." });
+            });
+
+        Trip.updateMany({
+
+            passengers: req.params.id_user,
+            status: 'LISTED'
+        },
+            {
+                '$pull' : {passengers : req.params.id_user}
+
+            }, function (err, trips) {
+
+                if (err) {
+                    //Log DB errors.
+                    console.log(err);
+                    return res.status(503).json({ message: "Database error" });
+                }
 
             });
 
+
+
+        user.save(function (err) {
+
+            if (err) {
+                //Log DB errors.
+                console.log(err);
+                return res.status(503).json({ message: "Database error" });
+            }
+
+            return res.status(200).json({ message: "User blocked with success." });
+
         });
+    });
+});
 
 
+router.get('/notifications', function (req, res, next) {
 
+    User.findById(req.token_user_id, function (err, user) {
+        if (err) {
+            console.log(err);
+            return res.status(503).json({ message: "Database error, can´t find user." });
+        }
 
-
+        if (!user) return res.status(404).json({ message: "User not found." });
     });
 
-
-
-
-
+    Trip.find()
+        .where('status').in(['LISTED'])
+        .where('driver').equals(req.token_user_id)
+        .where('tripDate').gt(new Date())
+        .sort({ 'tripDate': 'asc' })
+        .populate("pendingPassengers")
+        .exec(function (err, trips) {
+            if (err) return res.status(503).json({ message: "Database error, could not find trips." });
+            res.status(200).json(trips);
+    });    
 });
 
 
