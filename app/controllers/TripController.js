@@ -192,9 +192,7 @@ router.patch('/:id_trip/add_passenger', verifyToken, (req, res) => {
     });
 
     Trip.findById(req.params.id_trip)
-        .populate('driver')
-        .populate('pendingPassengers')
-        .populate('passengers')
+        .populate('passengers driver pendingPassengers')
         .exec(function (err, trip) {
 
             if (err) {
@@ -214,7 +212,7 @@ router.patch('/:id_trip/add_passenger', verifyToken, (req, res) => {
             }
 
 
-            if (trip.pendingPassengers.indexOf(req.body.passengerId) > -1 || trip.passengers.indexOf(req.body.passengerId) > -1) {
+            if (trip.pendingPassengers.map(function (user) { return user.id; }).indexOf(req.body.passengerId) > -1 || trip.passengers.map(function (user) { return user.id; }).indexOf(req.body.passengerId) > -1) {
                 return res.status(409).json({ message: "This user is already listed for this trip." });
             }
 
@@ -237,52 +235,65 @@ router.patch('/:id_trip/add_passenger', verifyToken, (req, res) => {
 
                 }
 
-                trip.save(function (err) {
+                trip.save()
+                    .then(function (tripSaved) {
 
-                    if (err) {
-                        console.log(err);
-                        res.status(503).send("Error saving data to database.");
-                        return;
-                    }
+                        Notification.createNotification(req.body.passengerId, trip.driver, trip.id, passengerMessage)
+                            .then(function (notification) {
 
-                    Notification.createNotification(req.body.passengerId, trip.driver, trip.id, passengerMessage)
-                        .then(function (notification) {
+                                if (!notification) {
 
-                            if (!notification) {
+                                    return res.status(503).json({ message: 'Database error.' });
+                                }
 
-                                return res.status(503).json({ message: 'Database error.' });
-                            }
+                            })
+                            .then(function () {
 
-                        })
-                        .then(function() {
+                                Notification.createNotification(trip.driver, req.body.passengerId, trip.id, driverMessage)
+                                    .then(function (notification) {
 
-                            Notification.createNotification(trip.driver, req.body.passengerId, trip.id, driverMessage)
-                                .then(function (notification) {
+                                        if (!notification) {
 
-                                    if (!notification) {
+                                            return res.status(503).json({ message: 'Database error.' });
+                                        }
 
-                                        return res.status(503).json({ message: 'Database error.' });
-                                    }
+                                    })
+                                    .then(function () {
 
-                                })
-                                .then(function () {
+                                        tripSaved.populate('passengers pendingPassengers', function (err) {
 
-                                    return res.status(200).json(trip);
+                                            if (err) {
+                                                return res.status(503).json({ message: 'Database error.' });
+                                            }
 
-                                });
-                        })
-                        .catch(function (err) {
-                            
-                            if (err) {
-                                console.log(err);
-                                return res.status(503).json({ message: 'Database error.' });
-                                
-                            }
+                                            return res.status(200).json(tripSaved);
 
-                        });
+                                        });
+                                        
+
+                                    });
+                            })
+                            .catch(function (err) {
+
+                                if (err) {
+                                    console.log(err);
+                                    return res.status(503).json({ message: 'Database error.' });
+
+                                }
+
+                            });
+
+                    })
+                    .catch(function (err) {
 
 
-                });
+                        if (err) {
+                            console.log(err);
+                            return res.status(503).send("Error saving data to database.");
+
+                        }
+
+                    });
 
             } else {
 
