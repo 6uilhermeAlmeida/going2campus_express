@@ -5,6 +5,7 @@ var router = express.Router();              // get an instance of the express Ro
 var verifyToken = require('../auth/VerifyToken.js');
 var User = require('../models/user');
 var Rate = require('../models/rate');
+var Notification = require('../models/notification');
 
 
 router.route('/')
@@ -111,7 +112,7 @@ router.route('/')
             }
 
             if (req.query.departureLatitude) {
-                
+
                 query
                     .where('departureLatitude')
                     .gte(Number(req.query.departureLatitude) - radius)
@@ -120,7 +121,7 @@ router.route('/')
             }
 
             if (req.query.departureLongitude) {
-                
+
                 query
                     .where('departureLongitude')
                     .gte(Number(req.query.departureLongitude) - radius)
@@ -129,7 +130,7 @@ router.route('/')
             }
 
             if (req.query.destinationLatitude) {
-                
+
                 query
                     .where('destinationLatitude')
                     .gte(Number(req.query.destinationLatitude) - radius)
@@ -138,7 +139,7 @@ router.route('/')
             }
 
             if (req.query.destinationLongitude) {
-                
+
                 query
                     .where('destinationLongitude')
                     .gte(Number(req.query.destinationLongitude) - radius)
@@ -166,6 +167,9 @@ router.route('/')
     });
 
 router.patch('/:id_trip/add_passenger', verifyToken, (req, res) => {
+
+    var passengerMessage;
+    var driverMessage;
 
     if (!req.body.passengerId) {
         return res.status(400).json({ message: "Bad request, wrong attribute name." });
@@ -215,27 +219,75 @@ router.patch('/:id_trip/add_passenger', verifyToken, (req, res) => {
             }
 
 
-
             if (trip.numberOfSeatsAvailable > 0) {
 
                 if (trip.autoAccept) {
+
                     trip.passengers.push(req.body.passengerId);
                     trip.numberOfSeatsAvailable--;
+                    passengerMessage = "You have been accepted for the trip. Bon voyage!"
+                    driverMessage = "You have a new passenger for this trip!"
+
                 } else {
+
                     trip.pendingPassengers.push(req.body.passengerId);
+                    passengerMessage = "You are in for approval, we'll let you know if you got in!"
+                    driverMessage = "A passenger is waiting for approval, let him know!"
+
+
                 }
 
                 trip.save(function (err) {
+
                     if (err) {
                         console.log(err);
                         res.status(503).send("Error saving data to database.");
                         return;
                     }
-                    res.status(200).json(trip);
+
+                    Notification.createNotification(req.body.passengerId, trip.driver, trip.id, passengerMessage)
+                        .then(function (notification) {
+
+                            if (!notification) {
+
+                                return res.status(503).json({ message: 'Database error.' });
+                            }
+
+                        })
+                        .then(function() {
+
+                            Notification.createNotification(trip.driver, req.body.passengerId, trip.id, driverMessage)
+                                .then(function (notification) {
+
+                                    if (!notification) {
+
+                                        return res.status(503).json({ message: 'Database error.' });
+                                    }
+
+                                })
+                                .then(function () {
+
+                                    return res.status(200).json(trip);
+
+                                });
+                        })
+                        .catch(function (err) {
+                            
+                            if (err) {
+                                console.log(err);
+                                return res.status(503).json({ message: 'Database error.' });
+                                
+                            }
+
+                        });
+
+
                 });
 
             } else {
-                res.status(202).json({ message: "Car has no seats available." });
+
+                return res.status(202).json({ message: "This car has no seats available." });
+
             }
         });
 

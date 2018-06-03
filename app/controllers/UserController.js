@@ -6,6 +6,7 @@ var config = require('../config/config.js');
 var jwt = require('jsonwebtoken');
 var bcrypt = require('bcrypt-nodejs');
 var verifyToken = require('../auth/VerifyToken.js');
+var Notification = require('../models/notification');
 
 var router = express.Router();
 
@@ -305,11 +306,26 @@ router.patch('/:id_user/change_password', verifyToken, function (req, res) {
 
         });
 
-
-
-
-
     });
+
+    router.get('/me/notifications',verifyToken, function (req, res) {
+        
+        Notification.find()
+            .where('toUser').equals(req.token_user_id)
+            .where('isActive').equals(true)
+            .exec(function (err, notifications) {
+               
+                if (err) {
+                    
+                    console.log(err);
+                    return res.status(503).json({message : "Database error."});
+                }
+
+                return res.status(200).json(notifications);
+
+            });
+
+    })
 
 
 
