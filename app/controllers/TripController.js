@@ -13,6 +13,7 @@ router.route('/')
     .post([verifyToken, Trip.postMiddleware], function (req, res) {
 
         var trip = new Trip(req.body);
+        trip.driver = req.token_user_id;
 
         trip.save(function (err) {
 
@@ -48,14 +49,14 @@ router.route('/')
 
     .get(function (req, res) {
 
-        var oneMeterToCoordinates = 0.000009 * 0.001
-        var radius = 200 * oneMeterToCoordinates
+        var oneMeterToCoordinates = 0.000009 * 0.001;
+        var radius = 200 * oneMeterToCoordinates;
 
 
         if (req.query) {
 
-            var placeholder = new Trip(req.query)
-            var error = placeholder.validateSync()
+            var placeholder = new Trip(req.query);
+            var error = placeholder.validateSync();
 
             if (error.errors.length > 0) {
                 return res.status(400).json(error.errors);
@@ -71,7 +72,7 @@ router.route('/')
 
                 query
                     .where('departureAddress')
-                    .regex(new RegExp(req.query.departureAddress, 'i'))
+                    .regex(new RegExp(req.query.departureAddress, 'i'));
 
             }
 
@@ -79,19 +80,19 @@ router.route('/')
 
                 query
                     .where('destinationAddress')
-                    .regex(new RegExp(req.query.destinationAddress, 'i'))
+                    .regex(new RegExp(req.query.destinationAddress, 'i'));
 
             }
 
             if (req.query.tripDate) {
 
-                var tripDate = new Date(req.query.tripDate)
-                var tripDateNextDay = new Date().setDate(tripDate.getDate() + 1)
+                var tripDate = new Date(req.query.tripDate);
+                var tripDateNextDay = new Date().setDate(tripDate.getDate() + 1);
 
                 query
                     .where('tripDate')
                     .gte(tripDate)
-                    .lte(tripDateNextDay)
+                    .lte(tripDateNextDay);
 
             }
 
@@ -99,7 +100,7 @@ router.route('/')
 
                 query
                     .where('numberOfSeatsAvailable')
-                    .gte(req.query.numberOfSeatsAvailable)
+                    .gte(req.query.numberOfSeatsAvailable);
 
             }
 
@@ -107,7 +108,7 @@ router.route('/')
 
                 query
                     .where('isFromCampus')
-                    .equals(req.query.isFromCampus)
+                    .equals(req.query.isFromCampus);
 
             }
 
@@ -116,7 +117,7 @@ router.route('/')
                 query
                     .where('departureLatitude')
                     .gte(Number(req.query.departureLatitude) - radius)
-                    .lte(Number(req.query.departureLatitude) + radius)
+                    .lte(Number(req.query.departureLatitude) + radius);
 
             }
 
@@ -125,7 +126,7 @@ router.route('/')
                 query
                     .where('departureLongitude')
                     .gte(Number(req.query.departureLongitude) - radius)
-                    .lte(Number(req.query.departureLongitude) + radius)
+                    .lte(Number(req.query.departureLongitude) + radius);
 
             }
 
@@ -134,7 +135,7 @@ router.route('/')
                 query
                     .where('destinationLatitude')
                     .gte(Number(req.query.destinationLatitude) - radius)
-                    .lte(Number(req.query.destinationLatitude) + radius)
+                    .lte(Number(req.query.destinationLatitude) + radius);
 
             }
 
@@ -143,7 +144,7 @@ router.route('/')
                 query
                     .where('destinationLongitude')
                     .gte(Number(req.query.destinationLongitude) - radius)
-                    .lte(Number(req.query.destinationLongitude) + radius)
+                    .lte(Number(req.query.destinationLongitude) + radius);
 
             }
 
@@ -154,13 +155,13 @@ router.route('/')
                 .sort({ 'tripDate': 'asc' })
                 .exec(function (err, trips) {
                     if (err) {
-                        console.log(err)
+                        console.log(err);
                         return res.status(503).json({ message: "Database error." });
 
                     } else {
                         return res.json(trips);
                     }
-                })
+                });
 
         }
 
@@ -223,14 +224,14 @@ router.patch('/:id_trip/add_passenger', verifyToken, (req, res) => {
 
                     trip.passengers.push(req.body.passengerId);
                     trip.numberOfSeatsAvailable--;
-                    passengerMessage = "You have been accepted for the trip. Bon voyage!"
-                    driverMessage = "You have a new passenger for this trip!"
+                    passengerMessage = "You have been accepted for the trip. Bon voyage!";
+                    driverMessage = "You have a new passenger for this trip!";
 
                 } else {
 
                     trip.pendingPassengers.push(req.body.passengerId);
-                    passengerMessage = "You are in for approval, we'll let you know if you got in!"
-                    driverMessage = "A passenger is waiting for approval, let him know!"
+                    passengerMessage = "You are in for approval, we'll let you know if you got in!";
+                    driverMessage = "A passenger is waiting for approval, let him know!";
 
 
                 }
@@ -344,16 +345,44 @@ router.patch('/:id_trip/accept_passenger', verifyToken, (req, res) => {
                 trip.pendingPassengers.splice(index, 1);
                 trip.passengers.push(req.body.passengerId);
                 trip.numberOfSeatsAvailable--;
+                let message = "You have been accepted for the trip. Bon voyage!";
 
-                trip.save(function (err) {
-                    if (err) {
-                        console.log(err);
-                        res.status(503).send("Error saving data to database.");
-                        return;
-                    }
-                    res.status(200).json(trip);
-                });
-            }
+                trip.save()
+            
+                    .then(function (tripSaved) {
+                        Notification.createNotification(req.body.passengerId, trip.driver.id, trip.id, message)
+                        .then(function (notification) {
+
+                            if (!notification) {
+
+                                return res.status(503).json({ message: 'Database error.' });
+                            }
+
+                        })
+                        .then(function () {
+
+                            tripSaved.populate('passengers pendingPassengers', function (err) {
+    
+                                if (err) {
+                                    return res.status(503).json({ message: 'Database error.' });
+                                }
+    
+                                return res.status(200).json(tripSaved);
+                            });
+                        });
+                    })
+
+                    
+                    .catch(function (err) {
+
+                        if (err) {
+                            console.log(err);
+                            return res.status(503).json({ message: 'Database error.' });
+
+                        }
+
+                    });
+            } 
             else {
                 res.status(409).json({ message: "User did not reserve this trip." });
             }
@@ -366,7 +395,7 @@ router.patch('/:id_trip/accept_passenger', verifyToken, (req, res) => {
 
 router.patch('/:id_trip/cancel', verifyToken, function (req, res) {
 
-    Trip.findById(req.params.id_trip).populate("driver").exec(function (err, trip) {
+    Trip.findById(req.params.id_trip).populate("driver passengers").exec(function (err, trip) {
 
         if (err) {
             return res.status(503).json({ message: "Something went wrong with the database." });
@@ -386,7 +415,13 @@ router.patch('/:id_trip/cancel', verifyToken, function (req, res) {
             if (err) {
                 return res.status(503).json({ message: "Database error, we could not save the trip" });
             }
+            message = "A trip you were in was cancelled";
 
+            trip.passengers.forEach(passenger => {
+                Notification.createNotification(passenger.id, trip.driver.id, trip.id, message);
+            });
+
+            
             res.status(200).json({ message: "Trip canceled successfully" });
 
         });
@@ -433,14 +468,42 @@ router.patch('/:id_trip/reject_passenger', verifyToken, (req, res) => {
 
         if (index > -1) {
             trip.pendingPassengers.splice(index, 1);
-            trip.save(function (err) {
+            
+            trip.save()
+            
+            .then(function (tripSaved) {
+                let message = "You were not accepted in a trip";
+                Notification.createNotification(req.body.passengerId, trip.driver.id, trip.id, message)
+                .then(function (notification) {
+
+                    if (!notification) {
+
+                        return res.status(503).json({ message: 'Database error.' });
+                    }
+
+                })
+                .then(function () {
+
+                    tripSaved.populate('passengers pendingPassengers', function (err) {
+    
+                        if (err) {
+                            return res.status(503).json({ message: 'Database error.' });
+                        }
+    
+                        return res.status(200).json(tripSaved);
+                    });
+                });
+            })
+            .catch(function (err) {
+
                 if (err) {
                     console.log(err);
-                    res.status(503).send("Error saving data to database.");
-                    return;
+                    return res.status(503).json({ message: 'Database error.' });
+
                 }
-                res.status(200).json(trip);
+
             });
+
         }
         else {
             res.status(409).json({ message: "User did not reserve this trip." });
@@ -482,16 +545,47 @@ router.patch('/:id_trip/cancel_reservation', verifyToken, (req, res) => {
 
         var indexPending = trip.pendingPassengers.indexOf(req.body.passengerId);
         var indexPassengers = trip.passengers.indexOf(req.body.passengerId);
+        
+        let message = "A passenger canceled his reservation";
 
         if (indexPassengers > -1) {
             trip.passengers.splice(indexPassengers, 1);
-            trip.save(function (err) {
+
+            trip.save()      
+            .then(function (tripSaved) {
+                
+                Notification.createNotification(trip.driver.id, req.body.passengerId, trip.id, message)
+                .then(function (notification) {
+
+                    if (!notification) {
+
+                        return res.status(503).json({ message: 'Database error.' });
+                    }
+
+                })
+                .then(function () {
+
+                    tripSaved.populate('passengers pendingPassengers', function (err) {
+    
+                        if (err) {
+                            return res.status(503).json({ message: 'Database error.' });
+                        }
+    
+                        res.status(200).json({ message: "Reservation cancelled.", trip: tripSaved });
+                    });
+                });
+            })
+
+            .catch(function (err) {
+
                 if (err) {
                     console.log(err);
-                    res.status(503).json({ message: "Error saving to database" });
+                    return res.status(503).json({ message: 'Database error.' });
+
                 }
-                res.status(200).json({ message: "Reservation cancelled.", trip: trip });
+
             });
+
         }
         else {
             if (indexPending > -1) {
