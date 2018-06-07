@@ -49,119 +49,111 @@ router.route('/')
 
         var oneMeterToCoordinates = 0.000009 * 0.001
         var radius = 200 * oneMeterToCoordinates
+        var minuteTolerance = 0;
 
+        if (req.query.radius) {
+            radius = Number(req.query.radius) * oneMeterToCoordinates;
+        }
 
-        if (req.query) {
+        if (req.query.minuteTolerance) {
+            minuteTolerance = req.query.minuteTolerance;
+        }
 
-            var placeholder = new Trip(req.query)
-            var error = placeholder.validateSync()
+        var query = Trip.find();
 
-            if (error.errors.length > 0) {
-                return res.status(400).json(error.errors);
-            }
-
-            if (req.query.radius) {
-                radius = Number(req.query.radius) * oneMeterToCoordinates;
-            }
-
-            var query = Trip.find();
-
-            if (req.query.departureAddress) {
-
-                query
-                    .where('departureAddress')
-                    .regex(new RegExp(req.query.departureAddress, 'i'))
-
-            }
-
-            if (req.query.destinationAddress) {
-
-                query
-                    .where('destinationAddress')
-                    .regex(new RegExp(req.query.destinationAddress, 'i'))
-
-            }
-
-            if (req.query.tripDate) {
-
-                var tripDate = new Date(req.query.tripDate)
-                var tripDateNextDay = new Date().setDate(tripDate.getDate() + 1)
-
-                query
-                    .where('tripDate')
-                    .gte(tripDate)
-                    .lte(tripDateNextDay)
-
-            }
-
-            if (req.query.numberOfSeatsAvailable) {
-
-                query
-                    .where('numberOfSeatsAvailable')
-                    .gte(req.query.numberOfSeatsAvailable)
-
-            }
-
-            if (req.query.isFromCampus) {
-
-                query
-                    .where('isFromCampus')
-                    .equals(req.query.isFromCampus)
-
-            }
-
-            if (req.query.departureLatitude) {
-                
-                query
-                    .where('departureLatitude')
-                    .gte(Number(req.query.departureLatitude) - radius)
-                    .lte(Number(req.query.departureLatitude) + radius)
-
-            }
-
-            if (req.query.departureLongitude) {
-                
-                query
-                    .where('departureLongitude')
-                    .gte(Number(req.query.departureLongitude) - radius)
-                    .lte(Number(req.query.departureLongitude) + radius)
-
-            }
-
-            if (req.query.destinationLatitude) {
-                
-                query
-                    .where('destinationLatitude')
-                    .gte(Number(req.query.destinationLatitude) - radius)
-                    .lte(Number(req.query.destinationLatitude) + radius)
-
-            }
-
-            if (req.query.destinationLongitude) {
-                
-                query
-                    .where('destinationLongitude')
-                    .gte(Number(req.query.destinationLongitude) - radius)
-                    .lte(Number(req.query.destinationLongitude) + radius)
-
-            }
+        if (req.query.departureAddress) {
 
             query
-                .populate('driver')
-                .populate('pendingPassengers')
-                .populate('passengers')
-                .sort({ 'tripDate': 'asc' })
-                .exec(function (err, trips) {
-                    if (err) {
-                        console.log(err)
-                        return res.status(503).json({ message: "Database error." });
-
-                    } else {
-                        return res.json(trips);
-                    }
-                })
+                .where('departureAddress')
+                .regex(new RegExp(req.query.departureAddress, 'i'))
 
         }
+
+        if (req.query.destinationAddress) {
+
+            query
+                .where('destinationAddress')
+                .regex(new RegExp(req.query.destinationAddress, 'i'))
+
+        }
+
+        if (req.query.tripDate) {
+
+            var tripDate = new Date(req.query.tripDate)
+
+            query
+                .where('tripDate')
+                .gte(new Date(tripDate - (minuteTolerance * 60 * 1000)))
+                .lte(new Date(tripDate.getTime() + (minuteTolerance * 60 * 1000)))
+
+        }
+
+        if (req.query.numberOfSeatsAvailable) {
+
+            query
+                .where('numberOfSeatsAvailable')
+                .gte(req.query.numberOfSeatsAvailable)
+
+        }
+
+        if (req.query.isFromCampus) {
+
+            query
+                .where('isFromCampus')
+                .equals(req.query.isFromCampus)
+
+        }
+
+        if (req.query.departureLatitude) {
+
+            query
+                .where('departureLatitude')
+                .gte(Number(req.query.departureLatitude) - radius)
+                .lte(Number(req.query.departureLatitude) + radius)
+
+        }
+
+        if (req.query.departureLongitude) {
+
+            query
+                .where('departureLongitude')
+                .gte(Number(req.query.departureLongitude) - radius)
+                .lte(Number(req.query.departureLongitude) + radius)
+
+        }
+
+        if (req.query.destinationLatitude) {
+
+            query
+                .where('destinationLatitude')
+                .gte(Number(req.query.destinationLatitude) - radius)
+                .lte(Number(req.query.destinationLatitude) + radius)
+
+        }
+
+        if (req.query.destinationLongitude) {
+
+            query
+                .where('destinationLongitude')
+                .gte(Number(req.query.destinationLongitude) - radius)
+                .lte(Number(req.query.destinationLongitude) + radius)
+
+        }
+
+        query
+            .populate('driver')
+            .populate('pendingPassengers')
+            .populate('passengers')
+            .sort({ 'tripDate': 'asc' })
+            .exec(function (err, trips) {
+                if (err) {
+                    console.log(err)
+                    return res.status(503).json({ message: "Database error." });
+
+                } else {
+                    return res.json(trips);
+                }
+            })
 
     });
 
