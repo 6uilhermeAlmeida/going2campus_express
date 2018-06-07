@@ -543,9 +543,7 @@ router.patch('/:id_trip/rate', verifyToken, function (req, res) {
                     } else {
 
                         user.rating = (((user.numberOfRates * user.rating) + givenRate - rate.rate))/ (user.numberOfRates);
-                        console.log(user.rating);
-                        console.log(givenRate);
-                        console.log(rate.rate);
+
                     }
 
                     rate.rate = givenRate;
