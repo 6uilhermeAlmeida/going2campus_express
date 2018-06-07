@@ -148,7 +148,7 @@ router.route('/')
             .exec(function (err, trips) {
                 if (err) {
                     console.log(err)
-                    return res.status(503).json({ message: "Database error." });
+                    return res.status(503).send(err);
 
                 } else {
                     return res.json(trips);
@@ -461,7 +461,7 @@ router.patch('/:id_trip/rate', verifyToken, function (req, res) {
 
         }
 
-        if (trip.pendingPassengers.indexOf(req.body.user) < 0 && trip.driver != req.body.user) {
+        if (trip.passengers.indexOf(req.body.user) < 0 && trip.driver != req.body.user) {
 
             //Bad request! The user sent does not belong to this trip.
             return res.status(404).json({ message: "Make sure the user belongs to this trip!" });
@@ -510,7 +510,7 @@ router.patch('/:id_trip/rate', verifyToken, function (req, res) {
             //Save this rate!
             var evaluated = user.id;
             var evaluator = req.token_user_id;
-            var givenRate = req.body.rate;
+            var givenRate = Number(req.body.rate);
 
             Rate.findOne(
                 {
@@ -542,26 +542,13 @@ router.patch('/:id_trip/rate', verifyToken, function (req, res) {
 
                     } else {
 
-                        user.rating = ((user.numberOfRates * user.rating) + givenRate - rate.rate) / (user.numberOfRates);
-
+                        user.rating = (((user.numberOfRates * user.rating) + givenRate - rate.rate))/ (user.numberOfRates);
+                        console.log(user.rating);
+                        console.log(givenRate);
+                        console.log(rate.rate);
                     }
 
-
-
                     rate.rate = givenRate;
-
-                    //Save the rate
-                    rate.save(function (err) {
-
-                        if (err) {
-
-                            //do the thing.
-                            console.log(err);
-                            return res.status(503).json({ message: "Something went wrong with our database." });
-
-                        }
-
-                    });
 
                     user.save(function (err) {
 
@@ -573,8 +560,22 @@ router.patch('/:id_trip/rate', verifyToken, function (req, res) {
 
                         }
 
+                        //Save the rate
+                        rate.save(function (err) {
+
+                        if (err) {
+
+                            //do the thing.
+                            console.log(err);
+                            return res.status(503).json({ message: "Something went wrong with our database." });
+
+                        }
+
+                        
                         //HOORAY!
                         return res.status(200).json({ message: "Your rates were saved!" });
+
+                    });
 
                     });
 

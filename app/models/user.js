@@ -15,7 +15,7 @@ var UserSchema = new Schema({
 
     name: { type: String, required: [true, 'Name is required.'] },
     password: { type: String, required: [true, 'Password is required.'], select: false },
-    rating: { type: Number, default: 0 },
+    rating: { type: Number, default: 0 , min: 0, max: 5},
     numberOfRates: { type: Number, default: 0 },
     preferences: [String],
     birthDate: { type: Date, required: [true, 'Birth date is required.'] },
