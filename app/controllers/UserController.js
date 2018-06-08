@@ -6,6 +6,7 @@ var config = require('../config/config.js');
 var jwt = require('jsonwebtoken');
 var bcrypt = require('bcrypt-nodejs');
 var verifyToken = require('../auth/VerifyToken.js');
+var Notification = require('../models/notification');
 
 var router = express.Router();
 
@@ -59,6 +60,43 @@ router.delete('/:id_user', function (req, res, next) {
             if (err) {
                 return res.status(503).json({ message: "Could not delete the user." });
             }
+
+            Trip.updateMany({
+
+                driver: req.params.id_user,
+                status: 'LISTED'
+            },
+                {
+                    status: 'CANCELED'
+
+                }, function (err, trips) {
+
+                    if (err) {
+                        //Log DB errors.
+                        console.log(err);
+                        return res.status(503).json(err);
+                    }
+
+                });
+
+            Trip.updateMany({
+
+                passengers: req.params.id_user,
+                status: 'LISTED'
+            },
+                {
+                    '$pull': { passengers: req.params.id_user }
+
+                }, function (err, trips) {
+
+                    if (err) {
+                        //Log DB errors.
+                        console.log(err);
+                        return res.status(503).json(err);
+                    }
+
+                });
+
 
             return res.status(200).json({ message: "User deleted successfully." });
         });
@@ -155,7 +193,7 @@ router.patch('/:id_user/edit', [verifyToken, User.postMiddleware], function (req
     User.findOneAndUpdate({ _id: req.params.id_user }, req.body, { new: true }, function (err, user) {
         if (err) {
             console.log(err);
-            return res.status(503).json({ message: "Database error, can´t find user." });
+            return res.status(503).json(err);
         }
         res.status(200).json(user);
     });
@@ -278,7 +316,7 @@ router.patch('/:id_user/block', verifyToken, function (req, res) {
             status: 'LISTED'
         },
             {
-                '$pull' : {passengers : req.params.id_user}
+                '$pull': { passengers: req.params.id_user }
 
             }, function (err, trips) {
 
@@ -290,8 +328,6 @@ router.patch('/:id_user/block', verifyToken, function (req, res) {
 
             });
 
-
-
         user.save(function (err) {
 
             if (err) {
@@ -301,34 +337,34 @@ router.patch('/:id_user/block', verifyToken, function (req, res) {
             }
 
             return res.status(200).json({ message: "User blocked with success." });
+        });
+
+
+
+    });
+});
+
+router.get('/me/notifications', verifyToken, function (req, res) {
+
+    Notification.find()
+        .where('toUser').equals(req.token_user_id)
+        .where('isActive').equals(true)
+        .populate('trip')
+        .exec(function (err, notifications) {
+
+            if (err) {
+
+                console.log(err);
+                return res.status(503).json(err);
+            }
+
+            return res.status(200).json(notifications);
 
         });
-    });
+
 });
 
 
-router.get('/notifications', function (req, res, next) {
-
-    User.findById(req.token_user_id, function (err, user) {
-        if (err) {
-            console.log(err);
-            return res.status(503).json({ message: "Database error, can´t find user." });
-        }
-
-        if (!user) return res.status(404).json({ message: "User not found." });
-    });
-
-    Trip.find()
-        .where('status').in(['LISTED'])
-        .where('driver').equals(req.token_user_id)
-        .where('tripDate').gt(new Date())
-        .sort({ 'tripDate': 'asc' })
-        .populate("pendingPassengers")
-        .exec(function (err, trips) {
-            if (err) return res.status(503).json({ message: "Database error, could not find trips." });
-            res.status(200).json(trips);
-    });    
-});
 
 
 module.exports = router;

@@ -15,7 +15,6 @@ var RateSchema = new Schema({
     //1-5 rate
     rate: { type: Number, required: [true, "rate is required."], min: 0, max: 5 },
 
-
 },
     {
         timestamps: true
