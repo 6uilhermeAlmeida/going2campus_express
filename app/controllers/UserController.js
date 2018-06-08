@@ -366,11 +366,6 @@ router.patch('/:id_user/change_password', verifyToken, function (req, res) {
     });
 
 
-
-
-
-
-
 });
 
 
