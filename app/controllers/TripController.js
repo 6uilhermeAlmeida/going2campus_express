@@ -212,7 +212,8 @@ router.patch('/:id_trip/add_passenger', verifyToken, (req, res) => {
             }
 
 
-            if (trip.pendingPassengers.map(function (user) { return user.id; }).indexOf(req.body.passengerId) > -1 || trip.passengers.map(function (user) { return user.id; }).indexOf(req.body.passengerId) > -1) {
+            if (trip.pendingPassengers.map(function (user) { return user.id; }).indexOf(req.body.passengerId) > -1
+                || trip.passengers.map(function (user) { return user.id; }).indexOf(req.body.passengerId) > -1) {
                 return res.status(409).json({ message: "This user is already listed for this trip." });
             }
 
@@ -269,7 +270,7 @@ router.patch('/:id_trip/add_passenger', verifyToken, (req, res) => {
                                             return res.status(200).json(tripSaved);
 
                                         });
-                                        
+
 
                                     });
                             })
@@ -748,6 +749,65 @@ router.get('/from/:lat_departure/:lon_departure/to/:lat_destination/:lon_destina
 
         });
 });
+
+router.route('/:id_trip/users/:id_userTo/notify')
+    .post(function (req, res, next) {
+
+        Trip.findById(req.params.id_trip, function (err, trip) {
+            
+            if (err) {
+                console.log(err);
+                return res.status(503).json(err);
+            }
+
+            if (!trip) {
+                return res.status(404).json({message: "Trip not found"});
+            }
+
+            if (trip.passengers.indexOf(req.params.id_userTo) < 0 &&
+                trip.pendingPassengers.indexOf(req.params.id_userTo) < 0 && 
+                trip.driver != req.params.id_userTo) {
+                return res.status(400).json({message : "This user is not in this trip."})
+            }
+
+            next();
+
+        });
+    })
+    .post(verifyToken, function (req, res) {
+
+        User.findById(req.params.id_userTo, function (err, user) {
+
+            if (err) {
+                console.log(err);
+                return res.status(503).json(err);
+            }
+            if (!user) {
+                return res.status(404).json({ message: "User not found." });
+            }
+
+            Notification
+                .createNotification(req.params.id_userTo, req.token_user_id, req.params.id_trip, req.body.message)
+                .then(function (notification) {
+                    notification
+                    .populate('trip'
+                    , function (err) {
+                        if (err) {
+                            console.log(err);
+                            return res.status(503).json(err);
+                        }
+                        
+                        return res.status(200).json(notification);
+                    });
+                })
+                .catch(function (err) {
+                    console.log(err);
+                    return res.status(503).json(err);
+                });
+        });
+
+
+    });
 
 
 
