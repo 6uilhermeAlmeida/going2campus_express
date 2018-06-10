@@ -20,7 +20,7 @@ var UserSchema = new Schema({
     preferences: [String],
     birthDate: { type: Date, required: [true, 'Birth date is required.'] },
     photoUrl: String,
-    cancelIndex: { type: Number, default: 0 },
+    //cancelIndex: { type: Number, default: 0 },
     //trips: { type: [String], select: false },
     admin: { type: Boolean, default: false },
     active: { type: Boolean, default: false },
