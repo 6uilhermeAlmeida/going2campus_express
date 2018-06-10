@@ -52,6 +52,7 @@ router.route('/')
         var oneMeterToCoordinates = 0.000009 * 0.001
         var radius = 200 * oneMeterToCoordinates
         var minuteTolerance = 0;
+        var sortBy = 'tripDate';
 
         if (req.query.radius) {
             radius = Number(req.query.radius) * oneMeterToCoordinates;
@@ -59,6 +60,10 @@ router.route('/')
 
         if (req.query.minuteTolerance) {
             minuteTolerance = req.query.minuteTolerance;
+        }
+
+        if (req.query.sortBy) {
+            sortBy = req.query.sortBy;
         }
 
         var query = Trip.find();
@@ -88,6 +93,13 @@ router.route('/')
                 .gte(new Date(tripDate - (minuteTolerance * 60 * 1000)))
                 .lte(new Date(tripDate.getTime() + (minuteTolerance * 60 * 1000)))
 
+        } else {
+
+            query
+                .where('tripDate')
+                .gte(new Date())
+                .where('status')
+                .ne('CANCELED')
         }
 
         if (req.query.numberOfSeatsAvailable) {
@@ -146,11 +158,15 @@ router.route('/')
             .populate('driver')
             .populate('pendingPassengers')
             .populate('passengers')
-            .sort({ 'tripDate': 'asc' })
+            .sort({ sortBy: 'asc' })
             .exec(function (err, trips) {
                 if (err) {
                     console.log(err)
+<<<<<<< HEAD
                     return res.status(503).send(err);
+=======
+                    return res.status(503).json(err);
+>>>>>>> 3ec9d0a2a65840aaeef5a616350fed8751dea2e5
 
                 } else {
                     return res.json(trips);
@@ -410,11 +426,27 @@ router.patch('/:id_trip/cancel', verifyToken, function (req, res) {
             }
             message = "A trip you were in was cancelled";
 
+<<<<<<< HEAD
             trip.passengers.forEach(passenger => {
                 Notification.createNotification(passenger.id, trip.driver.id, trip.id, message);
             });
 
             
+=======
+            if (req.token_user_id === trip.driver.id) {
+                
+                User.findByIdAndUpdate(trip.driver.id, {$inc : {cancelCounter : 1}}, function (err, user) {
+                    
+                    if (err) {
+                        console.log(err);
+                        res.status(err.errorStatus).json(err);
+                    }
+
+                });
+
+            }
+
+>>>>>>> 3ec9d0a2a65840aaeef5a616350fed8751dea2e5
             res.status(200).json({ message: "Trip canceled successfully" });
 
         });

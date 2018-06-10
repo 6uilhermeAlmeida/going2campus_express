@@ -28,7 +28,7 @@ var TripSchema = new Schema({
     driver: { type: Schema.Types.ObjectId, ref: 'User', required: [true, "driver is required (id)."] },
     isFromCampus: { type: Boolean, required: [true, "isFromCampus is required, true or false."] },
     passengers: [{ type: Schema.Types.ObjectId, ref: 'User' }],
-    status: { type: String, enum: ['LISTED', 'ONGOING', 'FINISHED', 'CANCELED'], default: 'LISTED' },
+    status: { type: String, enum: ['LISTED', 'CANCELED'], default: 'LISTED' },
     stoppingAddresses: [String],
     autoAccept: { type: Boolean, required: [true, "autoAccept is required."] },
     pendingPassengers: [{ type: Schema.Types.ObjectId, ref: 'User' }]
