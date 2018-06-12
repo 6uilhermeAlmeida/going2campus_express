@@ -6,7 +6,8 @@ var verifyToken = require('../auth/VerifyToken.js');
 var User = require('../models/user');
 var Rate = require('../models/rate');
 var Notification = require('../models/notification');
-const {notificationTypes} = Notification.notificationTypes;
+
+const notificationTypes = Notification.notificationTypes;
 
 
 router.route('/')
