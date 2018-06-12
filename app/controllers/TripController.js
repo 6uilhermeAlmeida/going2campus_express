@@ -7,6 +7,8 @@ var User = require('../models/user');
 var Rate = require('../models/rate');
 var Notification = require('../models/notification');
 
+const notificationTypes = Notification.notificationTypes;
+
 
 router.route('/')
 
@@ -217,8 +219,8 @@ router.patch('/:id_trip/add_passenger', verifyToken, (req, res) => {
             }
 
 
-            if (trip.pendingPassengers.map(function (user) { return user.id; }).indexOf(req.body.passengerId) > -1
-                || trip.passengers.map(function (user) { return user.id; }).indexOf(req.body.passengerId) > -1) {
+            if (trip.pendingPassengers.map(function (user) { return user.id; }).indexOf(req.body.passengerId) > -1 || 
+            trip.passengers.map(function (user) { return user.id; }).indexOf(req.body.passengerId) > -1) {
                 return res.status(409).json({ message: "This user is already listed for this trip." });
             }
 
@@ -229,14 +231,14 @@ router.patch('/:id_trip/add_passenger', verifyToken, (req, res) => {
 
                     trip.passengers.push(req.body.passengerId);
                     trip.numberOfSeatsAvailable--;
-                    passengerMessage = "You have been accepted for the trip. Bon voyage!";
-                    driverMessage = "You have a new passenger for this trip!";
+                    passengerMessage = notificationTypes.PASSENGER_ACCEPTED;
+                    driverMessage = notificationTypes.NEW_PASSENGER;
 
                 } else {
 
                     trip.pendingPassengers.push(req.body.passengerId);
-                    passengerMessage = "You are in for approval, we'll let you know if you got in!";
-                    driverMessage = "A passenger is waiting for approval, let him know!";
+                    passengerMessage = notificationTypes.AWAITING_APPROVAL;
+                    driverMessage = notificationTypes.PASSENGER_PENDING;
 
 
                 }
@@ -350,12 +352,11 @@ router.patch('/:id_trip/accept_passenger', verifyToken, (req, res) => {
                 trip.pendingPassengers.splice(index, 1);
                 trip.passengers.push(req.body.passengerId);
                 trip.numberOfSeatsAvailable--;
-                let message = "You have been accepted for the trip. Bon voyage!";
 
                 trip.save()
             
                     .then(function (tripSaved) {
-                        Notification.createNotification(req.body.passengerId, trip.driver.id, trip.id, message)
+                        Notification.createNotification(req.body.passengerId, trip.driver.id, trip.id, notificationTypes.PASSENGER_ACCEPTED)
                         .then(function (notification) {
 
                             if (!notification) {
@@ -420,10 +421,9 @@ router.patch('/:id_trip/cancel', verifyToken, function (req, res) {
             if (err) {
                 return res.status(503).json({ message: "Database error, we could not save the trip" });
             }
-            message = "A trip you were in was cancelled";
 
             trip.passengers.forEach(passenger => {
-                Notification.createNotification(passenger.id, trip.driver.id, trip.id, message);
+                Notification.createNotification(passenger.id, trip.driver.id, trip.id, notificationTypes.TRIP_CANCELED);
             });
 
             
@@ -490,8 +490,7 @@ router.patch('/:id_trip/reject_passenger', verifyToken, (req, res) => {
             trip.save()
             
             .then(function (tripSaved) {
-                let message = "You were not accepted in a trip";
-                Notification.createNotification(req.body.passengerId, trip.driver.id, trip.id, message)
+                Notification.createNotification(req.body.passengerId, trip.driver.id, trip.id, notificationTypes.PASSENGER_REJECTED)
                 .then(function (notification) {
 
                     if (!notification) {
@@ -564,7 +563,6 @@ router.patch('/:id_trip/cancel_reservation', verifyToken, (req, res) => {
         var indexPending = trip.pendingPassengers.indexOf(req.body.passengerId);
         var indexPassengers = trip.passengers.indexOf(req.body.passengerId);
         
-        let message = "A passenger canceled his reservation";
 
         if (indexPassengers > -1) {
             trip.passengers.splice(indexPassengers, 1);
@@ -572,7 +570,7 @@ router.patch('/:id_trip/cancel_reservation', verifyToken, (req, res) => {
             trip.save()      
             .then(function (tripSaved) {
                 
-                Notification.createNotification(trip.driver.id, req.body.passengerId, trip.id, message)
+                Notification.createNotification(trip.driver.id, req.body.passengerId, trip.id, notificationTypes.NEW_PASSENGER)
                 .then(function (notification) {
 
                     if (!notification) {
@@ -881,7 +879,7 @@ router.route('/:id_trip/users/:id_userTo/notify')
             if (trip.passengers.indexOf(req.params.id_userTo) < 0 &&
                 trip.pendingPassengers.indexOf(req.params.id_userTo) < 0 && 
                 trip.driver != req.params.id_userTo) {
-                return res.status(400).json({message : "This user is not in this trip."})
+                return res.status(400).json({message : "This user is not in this trip."});
             }
 
             next();
@@ -901,11 +899,10 @@ router.route('/:id_trip/users/:id_userTo/notify')
             }
 
             Notification
-                .createNotification(req.params.id_userTo, req.token_user_id, req.params.id_trip, req.body.message)
+                .createCustomNotification(req.params.id_userTo, req.token_user_id, req.params.id_trip, notificationTypes.CUSTOM_MESSAGE, req.body.message)
                 .then(function (notification) {
                     notification
-                    .populate('trip'
-                    , function (err) {
+                    .populate('trip', function (err) {
                         if (err) {
                             console.log(err);
                             return res.status(503).json(err);
@@ -919,10 +916,7 @@ router.route('/:id_trip/users/:id_userTo/notify')
                     return res.status(503).json(err);
                 });
         });
-
-
     });
-
 
 
 
