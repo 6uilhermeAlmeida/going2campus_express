@@ -5,7 +5,7 @@ var app = express();                 // define our app using express
 var bodyParser = require('body-parser');
 var mongoose = require('mongoose');
 var cors = require('cors');
-
+var path = require('path');
 
 var TripController = require('./app/controllers/TripController');
 var UserController = require('./app/controllers/UserController');
@@ -24,7 +24,7 @@ mongoose.connection
 // this will let us get the data from a POST
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
-
+app.set('view engine', 'mustache');
 app.use(cors());
 
 app.use(function (req, res, next) {
@@ -49,7 +49,7 @@ app.use(function (err, req, res, next) {
 var port = process.env.PORT || 8080;        // set our port
 
 app.get('/api/doc', function (req, res) {
-    res.sendfile('./doc/output.html');
+    res.sendFile(path.join(__dirname, '/doc', 'output.html'));
 });
 
 
