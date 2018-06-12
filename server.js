@@ -24,15 +24,15 @@ mongoose.connection
 // this will let us get the data from a POST
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
-app.set('view engine', 'mustache');
 app.use(cors());
+app.options('*',cors());
 
-app.use(function (req, res, next) {
+/*app.use(function (req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
     res.header("Access-Control-Allow-Headers", "Content-Type, x-access-token");
     res.header("Access-Control-Allow-Methods", "*");
     next();
-});
+});*/
 
 app.use(function (err, req, res, next) {
 
