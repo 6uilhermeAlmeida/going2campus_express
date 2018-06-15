@@ -344,11 +344,18 @@ router.patch('/:id_user/block', verifyToken, function (req, res) {
 
 router.get('/me/notifications', verifyToken, function (req, res) {
 
-    Notification.find()
+    var showAll = false || req.query.showAll;
+
+    query = Notification.find()
         .where('toUser').equals(req.token_user_id)
         .where('isActive').equals(true)
-        .populate('trip')
-        .exec(function (err, notifications) {
+        .populate('trip');
+
+        if (!showAll) {
+            query.where('isRead').equals(false);
+        }
+
+        query.exec(function (err, notifications) {
 
             if (err) {
 
