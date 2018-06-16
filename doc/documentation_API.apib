@@ -1,5 +1,5 @@
 FORMAT: 1A
-HOST : 172.22.21.11:3000
+HOST : 194.210.216.191/api
 
 # Going2Campus API documentation
 
@@ -11,10 +11,33 @@ This is the documentation for our car-sharing API, Going2Campus.
 
 
 ### Get All Users [GET]
++ Request 
+
+    + Headers 
+    
+            x-access-token: 123token123
+          
 + Response 200 (application/json)
     + Attributes (array[User])
 
++ Response 503 (application/json)
+
+    + Attributes 
+        + message  (string)
+        
+    + Body
+
+            {
+                "message" : "#Error#"
+            }
+            
 ### Get Me [GET /me]
++ Request 
+
+    + Headers 
+    
+            x-access-token: 123token123
+          
 + Response 200 (application/json)
     + Attributes (User)
     
@@ -41,6 +64,12 @@ This is the documentation for our car-sharing API, Going2Campus.
             }
 
 ### Delete User [DELETE /{id}]
++ Request 
+
+    + Headers 
+    
+            x-access-token: 123token123
+            
 + Parameters
     + id
 + Response 200 (application/json)
@@ -62,7 +91,7 @@ This is the documentation for our car-sharing API, Going2Campus.
     + Body
 
             {
-                "message" : "Could not delete/retrieve the user."
+                "message" : "#Error#"
             }
             
 + Response 404 (application/json)
@@ -77,6 +106,12 @@ This is the documentation for our car-sharing API, Going2Campus.
             }
 
 ### Get User trips (as a driver) [GET /{id}/trips/driver]
++ Request 
+
+    + Headers 
+    
+            x-access-token: 123token123
+            
 + Parameters
     + id
 
@@ -101,10 +136,10 @@ This is the documentation for our car-sharing API, Going2Campus.
     + Body
 
             {
-                "message" : "Database error, could not find user/trips."
+                "message" : "#Error#"
             }
             
-### Get User trips [GET /{id}/trips]
+### Get User Past trips [GET /{id}/past_trips]
 + Parameters
     + id
 
@@ -129,10 +164,44 @@ This is the documentation for our car-sharing API, Going2Campus.
     + Body
 
             {
-                "message" : "Database error, could not find user/trips."
+                "message" : "#Error#"
+            }
+            
+### Get User Future trips [GET /{id}/future_trips]
++ Parameters
+    + id
+
++ Response 200 (application/json)
+    + Attributes (array[Trip])
+    
++ Response 404 (application/json)
+
+    + Attributes 
+        +message (string)
+        
+    + Body
+
+            {
+                "message" : "No user found"
+            }
++ Response 503 (application/json)
+
+    + Attributes 
+        + message  (string)
+        
+    + Body
+
+            {
+                "message" : "#Error#"
             }
             
 ### Edit User [PATCH /{id}/edit]
++ Request 
+
+    + Headers 
+    
+            x-access-token: 123token123
+            
 + Parameters
     + id
     
@@ -149,7 +218,7 @@ This is the documentation for our car-sharing API, Going2Campus.
     + Body
 
             {
-                "message" : "Database error, can't find user."
+                "message" : "#Error#"
             }
 
 + Response 403 (application/json)
@@ -169,6 +238,56 @@ This is the documentation for our car-sharing API, Going2Campus.
 
 ## Trip Collection [/trips]
 
+### Create Trip [POST /trips]
++ Request 
+
+    + Headers 
+    
+            x-access-token: 123token123
+            
+    + Body
+    
+            {
+                "departureAddress": "Rua do Campo",
+                "destinationAddress": "ESTG",
+                "departureLatitude": "123",
+                "departureLongitude": "123",
+                "destinationLatitude": "234",
+                "destinationLongitude": "345",
+                "numberOfSeatsAvailable": "4",
+                "tripDate": "2020/04/25 16:30",
+                "duration": "123",
+                "isFromCampus": "true",
+                "autoAccept": "false"
+            }
+            
++ Response 200 (application/json)
+    + Attributes
+        - trip (Trip)
+        
++ Response 503 (application/json)
+
+    + Attributes
+        - message   (string)
+        
+    + Body
+
+            {
+                "message": "#Error#"
+            }
+
++ Response 400 (application/json)
+
+    + Attributes
+        - Array[string]
+        
+    + Body
+
+            {
+                "message": "#Error#"
+            }
+
+
 ### Get All Trips [GET /trips]
 + Response 200 (application/json)
     + Attributes
@@ -177,6 +296,10 @@ This is the documentation for our car-sharing API, Going2Campus.
         
 ### Add Passenger to Trip [PATCH /trips/{id}/add_passenger]
 + Request
+    + Headers 
+    
+            x-access-token: 123token123
+            
     + Body
 
             {
@@ -233,7 +356,7 @@ This is the documentation for our car-sharing API, Going2Campus.
     + Body
 
             {
-                "message": "We can't know if you are a user or not."
+                "message": "#Error#"
             }
 
 + Response 404 (application/json)
@@ -260,6 +383,10 @@ This is the documentation for our car-sharing API, Going2Campus.
 
 ### Accept Passenger [PATCH /trips/{id}/accept_passenger]
 + Request
+    + Headers 
+    
+            x-access-token: 123token123
+
     + Body
 
             {
@@ -306,7 +433,7 @@ This is the documentation for our car-sharing API, Going2Campus.
     + Body
 
             {
-                "message": "We can't know if you are a user or not."
+                "message": "#Error#"
             }
             
 + Response 404 (application/json)
@@ -385,7 +512,7 @@ This is the documentation for our car-sharing API, Going2Campus.
     + Body
 
             {
-                "message": "Something went wrong with the database."
+                "message": "#Error#"
             }
             
 + Response 404 (application/json)
@@ -401,6 +528,10 @@ This is the documentation for our car-sharing API, Going2Campus.
 
 ### Reject Passenger [PATCH /trips/{id}/reject_passenger]
 + Request
+    + Headers 
+    
+            x-access-token: 123token123
+            
     + Body
 
             {
@@ -416,6 +547,17 @@ This is the documentation for our car-sharing API, Going2Campus.
     + Attributes
         - trip (Trip)
 
++ Response 400 (application/json)
+
+    + Attributes
+        - message   (string)
+        
+    + Body
+
+            {
+                "message": "Bad request, wrong attribute name."
+            }
+            
 + Response 403 (application/json)
 
     + Attributes
@@ -435,7 +577,7 @@ This is the documentation for our car-sharing API, Going2Campus.
     + Body
 
             {
-                "message": "Error saving to database."
+                "message": "#Error#"
             }
 
 + Response 409 (application/json)
@@ -462,6 +604,10 @@ This is the documentation for our car-sharing API, Going2Campus.
 
 ### Cancel Reservation [PATCH /trips/{id}/cancel_reservation]
 + Request
+    + Headers 
+    
+            x-access-token: 123token123
+      
     + Body
 
             {
@@ -493,6 +639,17 @@ This is the documentation for our car-sharing API, Going2Campus.
             {
                 "message": "Unauthorized Request."
             }
+            
++ Response 400 (application/json)
+
+    + Attributes
+        - message   (string)
+        
+    + Body
+
+            {
+                "message": "Bad request, wrong attribute name."
+            }
 
 + Response 503 (application/json)
 
@@ -502,7 +659,7 @@ This is the documentation for our car-sharing API, Going2Campus.
     + Body
 
             {
-                "message": "Error saving to database."
+                "message": "#Error#"
             }
 
 + Response 409 (application/json)
@@ -527,73 +684,38 @@ This is the documentation for our car-sharing API, Going2Campus.
                 "message": "Trip/User not found."
             }
 
-### Get Trips to a location [GET /trips/destination/{lat}/{lon}/{radius}]
-+ Parameter
-    + lat: `13.24` - Latitude of the trip's destination
-    + lon: `19.24` - Longitude of the trip's destination
-    + radius: `1500` - Radius, in meters, to search for  
+### Rate [PATCH /trips/{id}/rate]
++ Request
+    + Headers 
     
-+ Response 200 (application/json)
-
-    + Attributes (array[Trip])
-    
-+ Response 503 (application/json)
-
-    + Attributes
-        - message   (string)
-        
+            x-access-token: 123token123
+      
     + Body
 
             {
-                "message": "Error saving to database."
+                "user": "123123123",
+                "rate": "4"
             }
-
-
-### Get Trips from a location [GET /trips/departure/{lat}/{lon}/{radius}]
+    
 + Parameter
-    + lat: `13.24` - Latitude of the trip's departure
-    + lon: `19.24` - Longitude of the trip's departure
-    + radius: `1500` - Radius, in meters, to search for  
+    + id: `1` - The id of the trip
+            
     
 + Response 200 (application/json)
 
-    + Attributes (array[Trip])
-    
-+ Response 503 (application/json)
+    + Attributes (Trip)
+        - message (string)
 
-    + Attributes
-        - message   (string)
-        
     + Body
-
-            {
-                "message": "Error saving to database."
-            }
-
-
-### Get Trips from a location to another location [GET /trips/from/{lat_departure}/{lon_departure}/to/{lat_destination}/{lon_destination}/{radius}]
-+ Parameter
-    + lat_departure: `13.24` - Latitude of the trip's departure
-    + lon_departure: `19.24` - Longitude of the trip's departure
-    + lat_destination: `22.15` - Latitude of the trip's destination
-    + lon_destination: `18.15` - Longitude of the trip's destination
-    + radius: `1500` - Radius, in meters, to search for  
     
-+ Response 200 (application/json)
-
-    + Attributes (array[Trip])
-    
-+ Response 503 (application/json)
-
-    + Attributes
-        - message   (string)
-        
-    + Body
-
             {
-                "message": "Error saving to database."
+                "message": "Reservation cancelled."
+                "trip" : trip
             }
+          
+            
 
+            
 # Group Auth
 
 ## Auth Collection [/auth]
@@ -694,12 +816,12 @@ This is the documentation for our car-sharing API, Going2Campus.
 - destinationLatitude: 23.17 (number) - The destination's latitude
 - destinationLongitude: 88.15 (number) - The destination's longitude
 - numberOfSeatsAvailable: 4 (number) - The number of seats still numberOfSeatsAvailable
-- tripDate: `2019-12-31T14:30:00.000Z` (string) - Trip departure's date
+- tripDate: `2019-12-31 14:30:00` (string) - Trip departure's date
 - duration: 120 (number) - Trip duration in minutes
 - driver: User - Trip driver
 - departure: true (boolean) - Whether the trip is to campus or from campus
 - passengers: Carlos, Miguel (array[User]) - Array of Passengers
-- status: ONGOING (string) - Status of the trip LISTED, ONGOING, FINISHED, CANCELED
+- status: LISTED (string) - Status of the trip LISTED, CANCELED
 - stoppingAddresses: Rua das Portelas, Rua do Campo (array[string]) - Addresses where the trip will stop
 - autoAccept: true (boolean) - Auto accepting any passenger
 - pendingPassengers: Carlos, Miguel (array[User]) - Array of Passengers
