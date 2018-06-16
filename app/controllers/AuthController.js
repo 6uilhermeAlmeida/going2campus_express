@@ -182,41 +182,28 @@ router.get('/verify/:id_user/:verification_code', function (req, res) {
 
 });
 
-router.get('/reset', function (req, res) {
+router.get('/askForReset', function (req, res) {
 
     if (!req.query.email) {
         return res.status(400).json({ message: "Missing query 'email'." });
     }
 
-    var password = sha256(req.query.email + (new Date).getTime() + config.secret);
-    var passwordHashed = bcrypt.hashSync(password);
+    var transporter = mailer.createTransport({
+        service: 'gmail',
+        auth: {
+            user: config.mail_user,
+            pass: config.mail_password
+        }
+    });
 
-    User.findOneAndUpdate({ mail: req.query.email }, { password: passwordHashed }, { new: true }, function (err, user) {
 
+    fs.readFile('app/config/mail_ask_for_reset.html', 'utf8', function (err, html) {
 
         if (err) {
-            //Log those database errors!
             console.log(err);
-            return res.status(503).json({ message: "A problem occurred with the database." });
-
         }
 
-        if (!user) {
-
-            return res.status(404).json({ message: "This user was not found." })
-
-        }
-
-        var transporter = mailer.createTransport({
-            service: 'gmail',
-            auth: {
-                user: config.mail_user,
-                pass: config.mail_password
-            }
-        });
-
-
-        fs.readFile('app/config/mail_password.html', 'utf8', function (err, html) {
+        User.findOne().where('mail').equals(req.query.email).exec(function (err, user) {
 
             if (err) {
                 console.log(err);
@@ -226,32 +213,122 @@ router.get('/reset', function (req, res) {
             var rendered = Mustache.render(template,
                 {
                     user: user,
-                    newPassword : password 
+                    action_url: config.host + 'api/auth/reset?email=' + req.query.email + '&signed=' + user.createdAt.getTime()
 
                 });
 
             const mailOptions = {
                 from: config.mail_user, // sender address
                 to: user.mail, // list of receivers
-                subject: 'Password recovery', // Subject line
+                subject: 'Password recovery, did you ask for it?', // Subject line
                 html: rendered
 
             };
 
             transporter.sendMail(mailOptions, function (err, info) {
                 if (err) {
-                    
                     console.log(err);
-                    
                 } else {
-
-                    res.status(200).json({message : "Mail sent with a new password."});
-
+                    res.status(200).json({ message: "Mail sent with a new password." });
                 }
             });
-
+            
         });
 
+
+    });
+
+})
+
+router.get('/reset', function (req, res) {
+
+    if (!req.query.email) {
+        return res.status(400).json({ message: "Missing query 'email'." });
+    }
+
+    if (!req.query.signed) {
+        return res.status(400).json({ message: "Missing query 'signed'." });
+    }
+
+    var password = sha256(req.query.email + (new Date).getTime() + config.secret);
+    var passwordHashed = bcrypt.hashSync(password);
+
+    User.findOne({ mail: req.query.email }, function (err, user) {
+
+
+        if (err) {
+            //Log those database errors!
+            console.log(err);
+            return res.status(503).json(err);
+
+        }
+
+        if (!user) {
+            return res.status(404).json({ message: "This user was not found." })
+        }
+
+        user.password = passwordHashed;
+
+        user.save(function (err) {
+
+            if (err) {
+                //Log those database errors!
+                console.log(err);
+                return res.status(503).json(err);
+            }
+
+            if (Number(req.query.signed) != user.createdAt.getTime()) {
+                return res.status(403).json({message : 'Bad signed request.'});
+            }
+
+            var transporter = mailer.createTransport({
+                service: 'gmail',
+                auth: {
+                    user: config.mail_user,
+                    pass: config.mail_password
+                }
+            });
+    
+    
+            fs.readFile('app/config/mail_password.html', 'utf8', function (err, html) {
+    
+                if (err) {
+                    console.log(err);
+                }
+    
+                var template = html;
+                var rendered = Mustache.render(template,
+                    {
+                        user: user,
+                        newPassword: password
+    
+                    });
+    
+                const mailOptions = {
+                    from: config.mail_user, // sender address
+                    to: user.mail, // list of receivers
+                    subject: 'Password recovery', // Subject line
+                    html: rendered
+    
+                };
+    
+                transporter.sendMail(mailOptions, function (err, info) {
+                    if (err) {
+    
+                        console.log(err);
+    
+                    } else {
+    
+                        res.status(200).json({ message: "Mail sent with a new password." });
+    
+                    }
+                });
+    
+            });
+    
+        });
+
+        
     })
 
 });
