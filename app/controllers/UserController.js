@@ -15,22 +15,24 @@ router.get('/', function (req, res) {
     User.find({}, function (err, users) {
 
         if (err) {
-            res.status(503).json({
-                message: "Database error, couldn´t retrieve users."
-            });
+            //Log DB errors.
+            console.log(err);
+            return res.status(503).json(err);
         }
         res.json(users);
 
     });
 });
 
-router.get('/me', function (req, res, next) {
+router.get('/me', function (req, res) {
 
     User.findById(req.token_user_id, function (err, user) {
 
-        if (err) return res.status(500).json({
-            message: "There was a problem finding the user."
-        });
+        if (err) {
+            //Log DB errors.
+            console.log(err);
+            return res.status(500).json(err);
+        }
 
         if (!user) return res.status(404).json({
             message: "No user found"
@@ -41,7 +43,7 @@ router.get('/me', function (req, res, next) {
 
 });
 
-router.delete('/:id_user', function (req, res, next) {
+router.delete('/:id_user', function (req, res) {
 
 
     if (!req.token_admin && (req.params.id_user != req.token_user_id)) {
@@ -53,9 +55,9 @@ router.delete('/:id_user', function (req, res, next) {
     User.findById(req.params.id_user, function (err, user) {
 
         if (err) {
-            return res.status(503).json({
-                message: "Could not retrieve the user."
-            });
+            //Log DB errors.
+            console.log(err);
+            return res.status(503).json(err);
         }
 
         if (!user) {
@@ -67,9 +69,9 @@ router.delete('/:id_user', function (req, res, next) {
         user.remove(function (err, user) {
 
             if (err) {
-                return res.status(503).json({
-                    message: "Could not delete the user."
-                });
+                //Log DB errors.
+                console.log(err);
+                return res.status(503).json(err);
             }
 
             Trip.updateMany({
@@ -122,10 +124,9 @@ router.get('/:id_user/trips/driver', function (req, res) {
 
     User.findById(req.params.id_user, function (err, user) {
         if (err) {
+            //Log DB errors.
             console.log(err);
-            return res.status(503).json({
-                message: "Database error, can´t find user."
-            });
+            return res.status(503).json(err);
         }
 
         if (!user) return res.status(404).json({
@@ -138,9 +139,11 @@ router.get('/:id_user/trips/driver', function (req, res) {
         'driver': req.params.id_user
     }).populate("driver").exec(function (err, trips) {
 
-        if (err) return res.status(503).json({
-            message: "Database error, could not find trips."
-        });
+        if (err){
+            //Log DB errors.
+            console.log(err);
+            return res.status(503).json(err);
+        }
         if (trips.length <= 0) return res.status(404).json({
             message: "Trips not found."
         });
@@ -155,10 +158,9 @@ router.get('/:id_user/past_trips', function (req, res) {
 
     User.findById(req.params.id_user, function (err, user) {
         if (err) {
+            //Log DB errors.
             console.log(err);
-            return res.status(503).json({
-                message: "Database error, can´t find user."
-            });
+            return res.status(503).json(err);
         }
 
         if (!user) return res.status(404).json({
@@ -175,10 +177,11 @@ router.get('/:id_user/past_trips', function (req, res) {
         .populate("passengers")
         .populate("pendingPassengers")
         .exec(function (err, trips) {
-            if (err) return res.status(503).json({
-                message: "Database error, could not find trips.",
-                error: err
-            });
+            if (err) {
+                //Log DB errors.
+                console.log(err);
+                return res.status(503).json(err);
+            }
 
             res.status(200).json(trips);
 
@@ -190,10 +193,9 @@ router.get('/:id_user/future_trips', function (req, res) {
 
     User.findById(req.params.id_user, function (err, user) {
         if (err) {
+            //Log DB errors.
             console.log(err);
-            return res.status(503).json({
-                message: "Database error, can´t find user."
-            });
+            return res.status(503).json(err);
         }
 
         if (!user) return res.status(404).json({
@@ -211,9 +213,11 @@ router.get('/:id_user/future_trips', function (req, res) {
         .populate("pendingPassengers")
         .exec(function (err, trips) {
 
-            if (err) return res.status(503).json({
-                message: "Database error, could not find trips."
-            });
+            if (err) {
+                //Log DB errors.
+                console.log(err);
+                return res.status(503).json(err);
+            }
 
             res.status(200).json(trips);
 
@@ -235,6 +239,7 @@ router.patch('/:id_user/edit', [verifyToken, User.postMiddleware], function (req
         new: true
     }, function (err, user) {
         if (err) {
+            //Log DB errors.
             console.log(err);
             return res.status(503).json(err);
         }
@@ -272,12 +277,9 @@ router.patch('/:id_user/change_password', verifyToken, function (req, res) {
     User.findById(id).select('+password').exec(function (err, user) {
 
         if (err) {
-            //Log those database errors!
+            //Log DB errors.
             console.log(err);
-            return res.status(503).json({
-                message: "A problem occurred with the database."
-            });
-
+            return res.status(503).json(err);
         }
 
         if (!user) {
@@ -308,11 +310,9 @@ router.patch('/:id_user/change_password', verifyToken, function (req, res) {
         user.save(function (err) {
 
             if (err) {
-                //LOG THEM DB ERRORS!
+                //Log DB errors.
                 console.log(err);
-                return res.status(503).json({
-                    message: "A problem occurred with the database."
-                });
+                return res.status(503).json(err);
             }
 
             //HOORAY!
@@ -339,9 +339,7 @@ router.patch('/:id_user/block', verifyToken, function (req, res) {
         if (err) {
             //Log DB errors.
             console.log(err);
-            return res.status(503).json({
-                message: "Database error"
-            });
+            return res.status(503).json(err);
         }
 
         if (!user) {
@@ -365,9 +363,7 @@ router.patch('/:id_user/block', verifyToken, function (req, res) {
             if (err) {
                 //Log DB errors.
                 console.log(err);
-                return res.status(503).json({
-                    message: "Database error"
-                });
+                return res.status(503).json(err);
             }
 
         });
@@ -386,9 +382,7 @@ router.patch('/:id_user/block', verifyToken, function (req, res) {
             if (err) {
                 //Log DB errors.
                 console.log(err);
-                return res.status(503).json({
-                    message: "Database error"
-                });
+                return res.status(503).json(err);
             }
 
         });
@@ -398,9 +392,7 @@ router.patch('/:id_user/block', verifyToken, function (req, res) {
             if (err) {
                 //Log DB errors.
                 console.log(err);
-                return res.status(503).json({
-                    message: "Database error"
-                });
+                return res.status(503).json(err);
             }
 
             return res.status(200).json({
@@ -419,15 +411,17 @@ router.get('/me/notifications', verifyToken, function (req, res) {
     .where('toUser').equals(req.token_user_id)
     .where('isRead').equals(false).exec(function (err,notifications) {       
         if (err) {
+            //Log DB errors.
             console.log(err);
             return res.status(503).json(err);
-        } 
+        }
         res.status(200).json(notifications);
     });
 
     Notification.updateMany({toUser: req.token_user_id},{isRead: true})
     .exec(function(err) {
         if (err) {
+            //Log DB errors.
             console.log(err);
             return res.status(503).json(err);
         }
