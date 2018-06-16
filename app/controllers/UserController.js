@@ -135,11 +135,9 @@ router.get('/:id_user/trips/driver', function (req, res) {
     });
 
 
-    Trip.find({
-        'driver': req.params.id_user
-    }).populate("driver").exec(function (err, trips) {
+    Trip.find({ 'driver': req.params.id_user }).populate("driver").exec(function (err, trips) {
 
-        if (err){
+        if (err) {
             //Log DB errors.
             console.log(err);
             return res.status(503).json(err);
@@ -156,6 +154,9 @@ router.get('/:id_user/trips/driver', function (req, res) {
 
 router.get('/:id_user/past_trips', function (req, res) {
 
+    var itemsPerPage = Number(req.query.itemsPerPage) || 20;
+    var page = Number(req.query.page) || 1;
+
     User.findById(req.params.id_user, function (err, user) {
         if (err) {
             //Log DB errors.
@@ -168,14 +169,19 @@ router.get('/:id_user/past_trips', function (req, res) {
         });
     });
 
-    Trip.find({ $or: [{ 'driver': req.params.id_user }, { 'passengers': req.params.id_user }] })
+    var query = Trip.find({ $or: [{ 'driver': req.params.id_user }, { 'passengers': req.params.id_user }] })
         .where('tripDate').lt(new Date())
         .sort({
             'tripDate': 'asc'
-        })
-        .populate("driver")
+        });
+
+    var queryForCount = Trip.find().merge(query);
+
+    query.populate("driver")
         .populate("passengers")
         .populate("pendingPassengers")
+        .skip((page * itemsPerPage) - itemsPerPage)
+        .limit(itemsPerPage)
         .exec(function (err, trips) {
             if (err) {
                 //Log DB errors.
@@ -183,7 +189,15 @@ router.get('/:id_user/past_trips', function (req, res) {
                 return res.status(503).json(err);
             }
 
-            res.status(200).json(trips);
+            queryForCount.count(function (err, count) {
+
+                res.status(200).json({
+                    page : page,
+                    totalPages : Math.ceil(Number(count)/itemsPerPage),
+                    totalTripsInPage : trips.length,
+                    trips : trips
+                });
+            })
 
         });
 
@@ -236,15 +250,15 @@ router.patch('/:id_user/edit', [verifyToken, User.postMiddleware], function (req
     User.findOneAndUpdate({
         _id: req.params.id_user
     }, req.body, {
-        new: true
-    }, function (err, user) {
-        if (err) {
-            //Log DB errors.
-            console.log(err);
-            return res.status(503).json(err);
-        }
-        res.status(200).json(user);
-    });
+            new: true
+        }, function (err, user) {
+            if (err) {
+                //Log DB errors.
+                console.log(err);
+                return res.status(503).json(err);
+            }
+            res.status(200).json(user);
+        });
 });
 
 router.patch('/:id_user/change_password', verifyToken, function (req, res) {
@@ -360,11 +374,11 @@ router.patch('/:id_user/block', verifyToken, function (req, res) {
 
             }, function (err, trips) {
 
-            if (err) {
-                //Log DB errors.
-                console.log(err);
-                return res.status(503).json(err);
-            }
+                if (err) {
+                    //Log DB errors.
+                    console.log(err);
+                    return res.status(503).json(err);
+                }
 
             });
 
@@ -379,11 +393,11 @@ router.patch('/:id_user/block', verifyToken, function (req, res) {
 
             }, function (err, trips) {
 
-            if (err) {
-                //Log DB errors.
-                console.log(err);
-                return res.status(503).json(err);
-            }
+                if (err) {
+                    //Log DB errors.
+                    console.log(err);
+                    return res.status(503).json(err);
+                }
 
             });
 
@@ -434,8 +448,8 @@ router.get('/me/notifications', verifyToken, function (req, res) {
 
 router.patch('/me/notifications/:id_notification/read', verifyToken, function (req, res) {
 
-    Notification.findByIdAndUpdate(req.params.id_notification, {isRead : true}, function (err, notification) {
-       
+    Notification.findByIdAndUpdate(req.params.id_notification, { isRead: true }, function (err, notification) {
+
         if (err) {
             //Log DB errors.
             console.log(err);
@@ -449,9 +463,9 @@ router.patch('/me/notifications/:id_notification/read', verifyToken, function (r
         if (notification.toUser != req.token_user_id) {
             return res.status(403);
         }
-        
-        return res.status(200).json({message : "Notification updated successfully!"});
-        
+
+        return res.status(200).json({ message: "Notification updated successfully!" });
+
     });
 
 });

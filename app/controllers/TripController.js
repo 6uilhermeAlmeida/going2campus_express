@@ -34,17 +34,12 @@ router.route('/')
     .get(function (req, res) {
 
         var oneMeterToCoordinates = 0.000009 * 0.001
-        var radius = (Number(req.query.radius) || 200 ) * oneMeterToCoordinates
+        var radius = (Number(req.query.radius) || 200) * oneMeterToCoordinates
         var minuteTolerance = Number(req.query.minuteTolerance) || 0;
-        var sortBy = (req.query.sortBy.toUpperCase() == 'DESC') ? "-" :"";
+        var sortBy = (req.query.sortBy && (req.query.sortBy.toUpperCase() == 'DESC')) ? "-" : "";
         var orderBy = sortBy + (req.query.orderBy || 'tripDate');
-
-
-        console.log({
-            radius,
-            minuteTolerance,
-            sortBy
-        });
+        var itemsPerPage = Number(req.query.itemsPerPage) || 20;
+        var page = Number(req.query.page) || 1;
 
         var query = Trip.find();
 
@@ -134,10 +129,16 @@ router.route('/')
 
         }
 
+        var queryForCount = Trip.find().merge(query);
+
+
         query
             .populate('driver')
             .populate('pendingPassengers')
-            .populate('passengers')
+            .populate('passengers');
+
+        query.skip((page * itemsPerPage) - itemsPerPage)
+            .limit(itemsPerPage)
             .sort(orderBy)
             .exec(function (err, trips) {
                 if (err) {
@@ -145,7 +146,29 @@ router.route('/')
                     console.log(err);
                     return res.status(503).json(err);
                 } else {
-                    return res.json(trips);
+
+                    queryForCount.count({}, function (err, count) {
+
+                        if (err) {
+                            //Log DB errors.
+                            console.log(err);
+                            return res.status(503).json(err);
+                        }
+
+                        var totalPages = Math.ceil(Number(count) / itemsPerPage);
+
+                        return res.json({
+                            page: page,
+                            totalPages: totalPages,
+                            totalTripsInPage: trips.length,
+                            trips: trips
+                        });
+
+                    })
+
+
+
+
                 }
             });
 
@@ -200,8 +223,8 @@ router.patch('/:id_trip/add_passenger', verifyToken, (req, res) => {
             }
 
 
-            if (trip.pendingPassengers.map(function (user) { return user.id; }).indexOf(req.body.passengerId) > -1 || 
-            trip.passengers.map(function (user) { return user.id; }).indexOf(req.body.passengerId) > -1) {
+            if (trip.pendingPassengers.map(function (user) { return user.id; }).indexOf(req.body.passengerId) > -1 ||
+                trip.passengers.map(function (user) { return user.id; }).indexOf(req.body.passengerId) > -1) {
                 return res.status(409).json({ message: "This user is already listed for this trip." });
             }
 
@@ -339,33 +362,33 @@ router.patch('/:id_trip/accept_passenger', verifyToken, (req, res) => {
                 trip.numberOfSeatsAvailable--;
 
                 trip.save()
-            
+
                     .then(function (tripSaved) {
                         Notification.createNotification(req.body.passengerId, trip.driver.id, trip.id, notificationTypes.PASSENGER_ACCEPTED)
-                        .then(function (notification) {
+                            .then(function (notification) {
 
-                            if (!notification) {
+                                if (!notification) {
 
-                                return res.status(503).json({ message: 'Database error.' });
-                            }
-
-                        })
-                        .then(function () {
-
-                            tripSaved.populate('passengers pendingPassengers', function (err) {
-    
-                                if (err) {
-                                    //Log DB errors.
-                                    console.log(err);
-                                    return res.status(503).json(err);
+                                    return res.status(503).json({ message: 'Database error.' });
                                 }
-    
-                                return res.status(200).json(tripSaved);
+
+                            })
+                            .then(function () {
+
+                                tripSaved.populate('passengers pendingPassengers', function (err) {
+
+                                    if (err) {
+                                        //Log DB errors.
+                                        console.log(err);
+                                        return res.status(503).json(err);
+                                    }
+
+                                    return res.status(200).json(tripSaved);
+                                });
                             });
-                        });
                     })
 
-                    
+
                     .catch(function (err) {
 
                         if (err) {
@@ -375,7 +398,7 @@ router.patch('/:id_trip/accept_passenger', verifyToken, (req, res) => {
                         }
 
                     });
-            } 
+            }
             else {
                 res.status(409).json({ message: "User did not reserve this trip." });
             }
@@ -417,11 +440,11 @@ router.patch('/:id_trip/cancel', verifyToken, function (req, res) {
                 Notification.createNotification(passenger.id, trip.driver.id, trip.id, notificationTypes.TRIP_CANCELED);
             });
 
-            
+
             if (req.token_user_id === trip.driver.id) {
-                
-                User.findByIdAndUpdate(trip.driver.id, {$inc : {cancelCounter : 1}}, function (err, user) {
-                    
+
+                User.findByIdAndUpdate(trip.driver.id, { $inc: { cancelCounter: 1 } }, function (err, user) {
+
                     if (err) {
                         //Log DB errors.
                         console.log(err);
@@ -481,42 +504,42 @@ router.patch('/:id_trip/reject_passenger', verifyToken, (req, res) => {
 
         if (index > -1) {
             trip.pendingPassengers.splice(index, 1);
-            
+
             trip.save()
-            
-            .then(function (tripSaved) {
-                Notification.createNotification(req.body.passengerId, trip.driver.id, trip.id, notificationTypes.PASSENGER_REJECTED)
-                .then(function (notification) {
 
-                    if (!notification) {
+                .then(function (tripSaved) {
+                    Notification.createNotification(req.body.passengerId, trip.driver.id, trip.id, notificationTypes.PASSENGER_REJECTED)
+                        .then(function (notification) {
 
-                        return res.status(503).json({ message: 'Database error.' });
+                            if (!notification) {
+
+                                return res.status(503).json({ message: 'Database error.' });
+                            }
+
+                        })
+                        .then(function () {
+
+                            tripSaved.populate('passengers pendingPassengers', function (err) {
+
+                                if (err) {
+                                    //Log DB errors.
+                                    console.log(err);
+                                    return res.status(503).json(err);
+                                }
+
+                                return res.status(200).json(tripSaved);
+                            });
+                        });
+                })
+                .catch(function (err) {
+
+                    if (err) {
+                        //Log DB errors.
+                        console.log(err);
+                        return res.status(503).json(err);
                     }
 
-                })
-                .then(function () {
-
-                    tripSaved.populate('passengers pendingPassengers', function (err) {
-    
-                        if (err) {
-                            //Log DB errors.
-                            console.log(err);
-                            return res.status(503).json(err);
-                        }
-    
-                        return res.status(200).json(tripSaved);
-                    });
                 });
-            })
-            .catch(function (err) {
-
-                if (err) {
-                    //Log DB errors.
-                    console.log(err);
-                    return res.status(503).json(err);
-                }
-
-            });
 
         }
         else {
@@ -562,47 +585,47 @@ router.patch('/:id_trip/cancel_reservation', verifyToken, (req, res) => {
 
         var indexPending = trip.pendingPassengers.indexOf(req.body.passengerId);
         var indexPassengers = trip.passengers.indexOf(req.body.passengerId);
-        
+
 
         if (indexPassengers > -1) {
             trip.passengers.splice(indexPassengers, 1);
 
-            trip.save()      
-            .then(function (tripSaved) {
-                
-                Notification.createNotification(trip.driver.id, req.body.passengerId, trip.id, notificationTypes.NEW_PASSENGER)
-                .then(function (notification) {
+            trip.save()
+                .then(function (tripSaved) {
 
-                    if (!notification) {
+                    Notification.createNotification(trip.driver.id, req.body.passengerId, trip.id, notificationTypes.NEW_PASSENGER)
+                        .then(function (notification) {
 
+                            if (!notification) {
+
+                                return res.status(503).json({ message: 'Database error.' });
+                            }
+
+                        })
+                        .then(function () {
+
+                            tripSaved.populate('passengers pendingPassengers', function (err) {
+
+                                if (err) {
+                                    //Log DB errors.
+                                    console.log(err);
+                                    return res.status(503).json(err);
+                                }
+
+                                res.status(200).json({ message: "Reservation cancelled.", trip: tripSaved });
+                            });
+                        });
+                })
+
+                .catch(function (err) {
+
+                    if (err) {
+                        console.log(err);
                         return res.status(503).json({ message: 'Database error.' });
+
                     }
 
-                })
-                .then(function () {
-
-                    tripSaved.populate('passengers pendingPassengers', function (err) {
-    
-                        if (err) {
-                            //Log DB errors.
-                            console.log(err);
-                            return res.status(503).json(err);
-                        }
-    
-                        res.status(200).json({ message: "Reservation cancelled.", trip: tripSaved });
-                    });
                 });
-            })
-
-            .catch(function (err) {
-
-                if (err) {
-                    console.log(err);
-                    return res.status(503).json({ message: 'Database error.' });
-
-                }
-
-            });
 
         }
         else {
@@ -722,7 +745,7 @@ router.patch('/:id_trip/rate', verifyToken, function (req, res) {
 
                     } else {
 
-                        user.rating = (((user.numberOfRates * user.rating) + givenRate - rate.rate))/ (user.numberOfRates);
+                        user.rating = (((user.numberOfRates * user.rating) + givenRate - rate.rate)) / (user.numberOfRates);
 
                     }
 
@@ -744,17 +767,15 @@ router.patch('/:id_trip/rate', verifyToken, function (req, res) {
                                 return res.status(503).json(err);
                             }
 
-                        
-                        //HOORAY!
-                        return res.status(200).json({ message: "Your rates were saved!" });
 
-                    });
+                            //HOORAY!
+                            return res.status(200).json({ message: "Your rates were saved!" });
+
+                        });
 
                     });
 
                 });
-
-
 
         });
 
@@ -767,11 +788,11 @@ router.route('/:id_trip/users/:id_userTo/notify')
     .post(function (req, res, next) {
 
         if (!req.body.message) {
-            return res.status(400).json({message : "Bad request, must have a 'message' field."});
+            return res.status(400).json({ message: "Bad request, must have a 'message' field." });
         }
 
         Trip.findById(req.params.id_trip, function (err, trip) {
-            
+
             if (err) {
                 //Log DB errors.
                 console.log(err);
@@ -779,13 +800,13 @@ router.route('/:id_trip/users/:id_userTo/notify')
             }
 
             if (!trip) {
-                return res.status(404).json({message: "Trip not found"});
+                return res.status(404).json({ message: "Trip not found" });
             }
 
             if (trip.passengers.indexOf(req.params.id_userTo) < 0 &&
-                trip.pendingPassengers.indexOf(req.params.id_userTo) < 0 && 
+                trip.pendingPassengers.indexOf(req.params.id_userTo) < 0 &&
                 trip.driver != req.params.id_userTo) {
-                return res.status(400).json({message : "This user is not in this trip."});
+                return res.status(400).json({ message: "This user is not in this trip." });
             }
 
             next();
@@ -801,7 +822,7 @@ router.route('/:id_trip/users/:id_userTo/notify')
                 console.log(err);
                 return res.status(503).json(err);
             }
-            
+
             if (!user) {
                 return res.status(404).json({ message: "User not found." });
             }
@@ -810,15 +831,15 @@ router.route('/:id_trip/users/:id_userTo/notify')
                 .createCustomNotification(req.params.id_userTo, req.token_user_id, req.params.id_trip, notificationTypes.CUSTOM_MESSAGE, req.body.message)
                 .then(function (notification) {
                     notification
-                    .populate('trip', function (err) {
-                        if (err) {
-                            //Log DB errors.
-                            console.log(err);
-                            return res.status(503).json(err);
-                        }
-                        
-                        return res.status(200).json(notification);
-                    });
+                        .populate('trip', function (err) {
+                            if (err) {
+                                //Log DB errors.
+                                console.log(err);
+                                return res.status(503).json(err);
+                            }
+
+                            return res.status(200).json(notification);
+                        });
                 })
                 .catch(function (err) {
                     if (err) {

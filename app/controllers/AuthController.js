@@ -229,7 +229,7 @@ router.get('/askForReset', function (req, res) {
                 if (err) {
                     console.log(err);
                 } else {
-                    res.status(200).json({ message: "Mail sent with a new password." });
+                    res.status(200).json({ message: "Mail sent with a request confirmation." });
                 }
             });
             
