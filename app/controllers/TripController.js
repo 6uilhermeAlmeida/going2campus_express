@@ -568,84 +568,87 @@ router.patch('/:id_trip/cancel_reservation', verifyToken, (req, res) => {
             return res.status(404).json({ message: "This user does not exist." });
         }
 
-    });
+        Trip.findById(req.params.id_trip).populate('driver').exec(function (err, trip) {
 
-    Trip.findById(req.params.id_trip).exec(function (err, trip) {
+            if (err) {
+                //Log DB errors.
+                console.log(err);
+                return res.status(503).json(err);
+            }
 
-        if (err) {
-            //Log DB errors.
-            console.log(err);
-            return res.status(503).json(err);
-        }
-
-        if (!trip) {
-            return res.status(404).json({ message: "Trip not found." });
-        }
+            if (!trip) {
+                return res.status(404).json({ message: "Trip not found." });
+            }
 
 
-        var indexPending = trip.pendingPassengers.indexOf(req.body.passengerId);
-        var indexPassengers = trip.passengers.indexOf(req.body.passengerId);
+            var indexPending = trip.pendingPassengers.indexOf(req.body.passengerId);
+            var indexPassengers = trip.passengers.indexOf(req.body.passengerId);
 
 
-        if (indexPassengers > -1) {
-            trip.passengers.splice(indexPassengers, 1);
+            if (indexPassengers > -1) {
+                trip.passengers.splice(indexPassengers, 1);
+                trip.numberOfSeatsAvailable++;
+                trip.save()
+                    .then(function (tripSaved) {
 
-            trip.save()
-                .then(function (tripSaved) {
+                        Notification.createNotification(trip.driver.id, req.body.passengerId, trip.id, notificationTypes.NEW_PASSENGER)
+                            .then(function (notification) {
 
-                    Notification.createNotification(trip.driver.id, req.body.passengerId, trip.id, notificationTypes.NEW_PASSENGER)
-                        .then(function (notification) {
+                                if (!notification) {
 
-                            if (!notification) {
-
-                                return res.status(503).json({ message: 'Database error.' });
-                            }
-
-                        })
-                        .then(function () {
-
-                            tripSaved.populate('passengers pendingPassengers', function (err) {
-
-                                if (err) {
-                                    //Log DB errors.
-                                    console.log(err);
-                                    return res.status(503).json(err);
+                                    return res.status(503).json({ message: 'Database error.' });
                                 }
 
-                                res.status(200).json({ message: "Reservation cancelled.", trip: tripSaved });
+                            })
+                            .then(function () {
+
+                                tripSaved.populate('passengers pendingPassengers', function (err) {
+
+                                    if (err) {
+                                        //Log DB errors.
+                                        console.log(err);
+                                        return res.status(503).json(err);
+                                    }
+
+                                    res.status(200).json({ message: "Reservation cancelled.", trip: tripSaved });
+                                });
                             });
-                        });
-                })
+                    })
 
-                .catch(function (err) {
+                    .catch(function (err) {
 
-                    if (err) {
-                        console.log(err);
-                        return res.status(503).json({ message: 'Database error.' });
+                        if (err) {
+                            console.log(err);
+                            return res.status(503).json({ message: 'Database error.' });
 
-                    }
+                        }
 
-                });
+                    });
 
-        }
-        else {
-            if (indexPending > -1) {
-                trip.pendingPassengers.splice(indexPending, 1);
-                trip.save(function (err) {
-                    if (err) {
-                        //Log DB errors.
-                        console.log(err);
-                        return res.status(503).json(err);
-                    }
-                    res.status(200).json({ message: "Reservation cancelled.", trip: trip });
-                });
             }
             else {
-                res.status(409).json({ message: "User did not reserve this trip." });
+                if (indexPending > -1) {
+                    trip.pendingPassengers.splice(indexPending, 1);
+                    trip.numberOfSeatsAvailable++;
+                    trip.save(function (err) {
+                        if (err) {
+                            //Log DB errors.
+                            console.log(err);
+                            return res.status(503).json(err);
+                        }
+                        res.status(200).json({ message: "Reservation cancelled.", trip: trip });
+                    });
+                }
+                else {
+                    res.status(409).json({ message: "User did not reserve this trip." });
+                }
             }
-        }
+
+        });
 
     });
+
+
 
 });
 
