@@ -6,6 +6,7 @@ var jwt = require('jsonwebtoken');
 var bcrypt = require('bcrypt-nodejs');
 var verifyToken = require('../auth/VerifyToken.js');
 var Notification = require('../models/notification');
+var fs = require('fs');
 
 var router = express.Router();
 
@@ -192,10 +193,10 @@ router.get('/:id_user/past_trips', function (req, res) {
             queryForCount.count(function (err, count) {
 
                 res.status(200).json({
-                    page : page,
-                    totalPages : Math.ceil(Number(count)/itemsPerPage),
-                    totalTripsInPage : trips.length,
-                    trips : trips
+                    page: page,
+                    totalPages: Math.ceil(Number(count) / itemsPerPage),
+                    totalTripsInPage: trips.length,
+                    trips: trips
                 });
             })
 
@@ -469,6 +470,44 @@ router.patch('/me/notifications/:id_notification/read', verifyToken, function (r
     });
 
 });
+
+router.post('/me/uploadProfilePicture', verifyToken, function (req, res) {
+
+    if (!req.files) {
+        return res.status(400).json({ message: 'No files were uploaded.' });
+    }
+
+
+    var picture = req.files.picture;
+
+    if (picture.mimetype != "image/png" && picture.mimetype != "image/jpeg") {
+        return res.status(400).json({ message: "The file must an image (.png or .jpeg/jpg)" });
+    }
+
+    if (!fs.existsSync('./images')) {
+        fs.mkdirSync('./images');
+    }
+
+    picture.mv('images/' + req.token_user_id + '.jpg', function (err) {
+
+        if (err) {
+            console.log(err);
+            return res.status(500).json({ message: "It was not possible to upload this image." });
+        }
+
+        User.findByIdAndUpdate(req.token_user_id, { photoUrl: config.host + 'images/' + req.token_user_id + '.jpg' }, function (err, user) {
+            if (err) {
+                console.log(err);
+                return res.status(500).json(err);
+            }
+
+            return res.status(200).json({ message: "Image saved!" });
+
+        });
+
+    });
+
+})
 
 
 
