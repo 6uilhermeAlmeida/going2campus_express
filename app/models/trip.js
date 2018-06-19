@@ -11,7 +11,7 @@ var TripSchema = new Schema({
     departureLongitude: { type: Number, required: [true, "departureLongitude is required."] },
     destinationLatitude: { type: Number, required: [true, "destinationLatitude is required."] },
     destinationLongitude: { type: Number, required: [true, "destinationLongitude is required."] },
-    numberOfSeatsAvailable: { type: Number, required: [true, "numberOfSeatsAvailable is required."], min:1 },
+    numberOfSeatsAvailable: { type: Number, required: [true, "numberOfSeatsAvailable is required."]},
 
     tripDate:
         {
