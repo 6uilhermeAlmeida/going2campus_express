@@ -854,6 +854,47 @@ router.route('/:id_trip/users/:id_userTo/notify')
         });
     });
 
+router.patch('/:id_trip', [verifyToken, Trip.postMiddleware], function (req, res) {
+
+    Trip.findById(req.params.id_trip, function (err, trip) {
+
+        if (err) {
+            console.log(err);
+            return res.status(503).json(err);
+        }
+
+        if (!trip) {
+            return res.status(404).json({ message: "This trip was not found." });
+        }
+
+        if (req.token_user_id != trip.driver) {
+            return res.status(403).json({ message: "You are not the driver of this trip." });
+        }
+
+        if (req.body.numberOfSeatsAvailable && (trip.passengers.length > req.body.numberOfSeatsAvailable)) {
+            return res.status(400).json({message : "This would make us kick out a passenger randomly, if this trip is no longer possible, just cancel this one and create other."});
+        }
+
+        trip.set(req.body);
+
+        trip.save(function (err) {
+            if (err) {
+                console.log(err);
+                return res.status(503).json(err);
+            }
+
+            trip.passengers.forEach(function (passengerId) {
+                Notification.createNotification(passengerId, trip.driver, trip.id, notificationTypes.TRIP_EDITED);
+            });
+
+            return res.status(200).json({ trip: trip });
+            
+        });
+
+    })
+
+})
+
 
 
 module.exports = router;

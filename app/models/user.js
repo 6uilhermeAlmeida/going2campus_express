@@ -1,7 +1,7 @@
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
-var postExcept = ['numberOfRates', 'admin', 'active', 'cancelCounter', 'cancelCounter', 'rating', 'photoUrl', 'blocked'];
+var postExcept = ['numberOfRates', 'admin', 'active', 'cancelCounter', 'cancelCounter', 'rating', 'photoUrl', 'blocked', 'password'];
 
 var UserSchema = new Schema({
 
