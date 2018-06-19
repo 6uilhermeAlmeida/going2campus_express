@@ -49,6 +49,11 @@ app.use(function (err, req, res, next) {
 
     next();
 
+});
+
+app.use(function (req, res, next) {
+    console.log(req.method);
+    next();
 })
 
 var port = process.env.PORT || 8080;        // set our port

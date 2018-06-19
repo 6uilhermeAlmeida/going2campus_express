@@ -85,3 +85,4 @@ $RECYCLE.BIN/
 *.lnk
 
 images
+app/config/config.js
