@@ -106,6 +106,9 @@ router.post('/login', (req, res) => {
 
         if (err) return res.status(500).send('Error on the server.');
         if (!user) return res.status(404).send('No user found.');
+        if (user.blocked) {
+            return res.status(403).send('This user is blocked from our services, please contact going2campus@gmail.com to know why.');
+        }
         if (!user.active) return res.status(402).json({
             message: "You must verify your e-mail."
         });
