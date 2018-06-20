@@ -428,7 +428,8 @@ router.get('/me/notifications', verifyToken, function (req, res) {
     query = Notification.find()
         .where('toUser').equals(req.token_user_id)
         .where('isActive').equals(true)
-        .populate('trip');
+        .populate('trip')
+        .populate('fromUser');
 
     if (!showAll) {
         query.where('isRead').equals(false);
