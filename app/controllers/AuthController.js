@@ -204,12 +204,18 @@ router.get('/askForReset', function (req, res) {
 
         if (err) {
             console.log(err);
+            return res.status(503).json(err);
         }
 
         User.findOne().where('mail').equals(req.query.email).exec(function (err, user) {
 
             if (err) {
                 console.log(err);
+                return res.status(503).json(err);
+            }
+
+            if (!user) {
+                return res.status(404).json({message : "There is no user with this e-mail."});
             }
 
             var template = html;
@@ -231,6 +237,7 @@ router.get('/askForReset', function (req, res) {
             transporter.sendMail(mailOptions, function (err, info) {
                 if (err) {
                     console.log(err);
+                    res.status(500).json(err);
                 } else {
                     res.status(200).json({ message: "Mail sent with a request confirmation." });
                 }
