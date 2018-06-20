@@ -35,7 +35,7 @@ router.route('/')
 
         var oneMeterToCoordinates = 0.000009 * 0.001
         var radius = (Number(req.query.radius) || 200) * oneMeterToCoordinates
-        var minuteTolerance = Number(req.query.minuteTolerance) || 0;
+        var minuteTolerance = Number(req.query.minuteTolerance) || 10; //10 minutes tolerance by default
         var sortBy = (req.query.sortBy && (req.query.sortBy.toUpperCase() == 'DESC')) ? "-" : "";
         var orderBy = sortBy + (req.query.orderBy || 'tripDate');
         var itemsPerPage = Number(req.query.itemsPerPage) || 20;
