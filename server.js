@@ -29,7 +29,7 @@ app.use(bodyParser.json());
 app.use(cors());
 app.options('*',cors());
 app.use(fileUpload({
-    limits: { fileSize: 3 * 1024 * 1024 },
+    limits: { fileSize: 1024 * 1024 / 2},
   }));
 app.use('/images/',express.static('images'));
 
