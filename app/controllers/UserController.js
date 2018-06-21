@@ -413,7 +413,6 @@ router.patch('/:id_user/block', verifyToken, function (req, res) {
             return res.status(200).json({
                 message: "User blocked with success."
             });
-
         });
     });
 

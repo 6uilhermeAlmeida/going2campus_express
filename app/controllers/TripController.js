@@ -591,11 +591,10 @@ router.patch('/:id_trip/cancel_reservation', verifyToken, (req, res) => {
                 trip.save()
                     .then(function (tripSaved) {
 
-                        Notification.createNotification(trip.driver.id, req.body.passengerId, trip.id, notificationTypes.NEW_PASSENGER)
+                        Notification.createNotification(trip.driver.id, req.body.passengerId, trip.id, notificationTypes.PASSENGER_CANCELED)
                             .then(function (notification) {
 
                                 if (!notification) {
-
                                     return res.status(503).json({ message: 'Database error.' });
                                 }
 
