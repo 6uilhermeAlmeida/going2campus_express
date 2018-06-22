@@ -173,7 +173,7 @@ router.get('/:id_user/past_trips', function (req, res) {
     var query = Trip.find({ $or: [{ 'driver': req.params.id_user }, { 'passengers': req.params.id_user }] })
         .where('tripDate').lt(new Date())
         .sort({
-            'tripDate': 'asc'
+            'tripDate': 'desc'
         });
 
     var queryForCount = Trip.find().merge(query);
