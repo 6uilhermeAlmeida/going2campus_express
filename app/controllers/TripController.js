@@ -137,9 +137,12 @@ router.route('/')
             .populate('pendingPassengers')
             .populate('passengers');
 
-        query.skip((page * itemsPerPage) - itemsPerPage)
-            .limit(itemsPerPage)
-            .sort(orderBy)
+        if (page != 0) {
+            query.skip((page * itemsPerPage) - itemsPerPage)
+                .limit(itemsPerPage)
+        }
+
+        query.sort(orderBy)
             .exec(function (err, trips) {
                 if (err) {
                     //Log DB errors.
@@ -871,7 +874,7 @@ router.patch('/:id_trip', [verifyToken, Trip.postMiddleware], function (req, res
         }
 
         if (req.body.numberOfSeatsAvailable && (trip.passengers.length > req.body.numberOfSeatsAvailable)) {
-            return res.status(400).json({message : "This would make us kick out a passenger randomly, if this trip is no longer possible, just cancel this one and create other."});
+            return res.status(400).json({ message: "This would make us kick out a passenger randomly, if this trip is no longer possible, just cancel this one and create other." });
         }
 
         trip.set(req.body);
@@ -887,7 +890,7 @@ router.patch('/:id_trip', [verifyToken, Trip.postMiddleware], function (req, res
             });
 
             return res.status(200).json({ trip: trip });
-            
+
         });
 
     })
