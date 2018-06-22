@@ -39,7 +39,7 @@ router.route('/')
         var sortBy = (req.query.sortBy && (req.query.sortBy.toUpperCase() == 'DESC')) ? "-" : "";
         var orderBy = sortBy + (req.query.orderBy || 'tripDate');
         var itemsPerPage = Number(req.query.itemsPerPage) || 20;
-        var page = Number(req.query.page) || 1;
+        var page = Number(req.query.page) <= 0 ? 0 : 1;
 
         var query = Trip.find();
 
