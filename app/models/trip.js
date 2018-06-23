@@ -1,7 +1,7 @@
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
-var postExcept = ['stoppingAddresses', 'pendingPassengers', 'passengers', 'status'];
+var postExcept = ['stoppingAddresses', 'pendingPassengers', 'passengers', 'status', 'driver'];
 
 var TripSchema = new Schema({
 
@@ -11,7 +11,7 @@ var TripSchema = new Schema({
     departureLongitude: { type: Number, required: [true, "departureLongitude is required."] },
     destinationLatitude: { type: Number, required: [true, "destinationLatitude is required."] },
     destinationLongitude: { type: Number, required: [true, "destinationLongitude is required."] },
-    numberOfSeatsAvailable: { type: Number, required: [true, "numberOfSeatsAvailable is required."] },
+    numberOfSeatsAvailable: { type: Number, required: [true, "numberOfSeatsAvailable is required."]},
 
     tripDate:
         {

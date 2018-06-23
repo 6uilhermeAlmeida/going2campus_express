@@ -106,6 +106,9 @@ router.post('/login', (req, res) => {
 
         if (err) return res.status(500).send('Error on the server.');
         if (!user) return res.status(404).send('No user found.');
+        if (user.blocked) {
+            return res.status(403).send('This user is blocked from our services, please contact going2campus@gmail.com to know why.');
+        }
         if (!user.active) return res.status(402).json({
             message: "You must verify your e-mail."
         });
@@ -201,12 +204,18 @@ router.get('/askForReset', function (req, res) {
 
         if (err) {
             console.log(err);
+            return res.status(503).json(err);
         }
 
         User.findOne().where('mail').equals(req.query.email).exec(function (err, user) {
 
             if (err) {
                 console.log(err);
+                return res.status(503).json(err);
+            }
+
+            if (!user) {
+                return res.status(404).json({message : "There is no user with this e-mail."});
             }
 
             var template = html;
@@ -228,6 +237,7 @@ router.get('/askForReset', function (req, res) {
             transporter.sendMail(mailOptions, function (err, info) {
                 if (err) {
                     console.log(err);
+                    res.status(500).json(err);
                 } else {
                     res.status(200).json({ message: "Mail sent with a request confirmation." });
                 }

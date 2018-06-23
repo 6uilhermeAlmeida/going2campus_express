@@ -6,6 +6,8 @@ var bodyParser = require('body-parser');
 var mongoose = require('mongoose');
 var cors = require('cors');
 var path = require('path');
+var fileUpload = require('express-fileupload');
+
 
 var TripController = require('./app/controllers/TripController');
 var UserController = require('./app/controllers/UserController');
@@ -26,6 +28,10 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(cors());
 app.options('*',cors());
+app.use(fileUpload({
+    limits: { fileSize: 1024 * 1024 / 2},
+  }));
+app.use('/images/',express.static('images'));
 
 /*app.use(function (req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
@@ -43,7 +49,11 @@ app.use(function (err, req, res, next) {
 
     next();
 
+});
 
+app.use(function (req, res, next) {
+    console.log(req.method);
+    next();
 })
 
 var port = process.env.PORT || 8080;        // set our port

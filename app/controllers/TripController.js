@@ -35,11 +35,11 @@ router.route('/')
 
         var oneMeterToCoordinates = 0.000009 * 0.001
         var radius = (Number(req.query.radius) || 200) * oneMeterToCoordinates
-        var minuteTolerance = Number(req.query.minuteTolerance) || 0;
+        var minuteTolerance = Number(req.query.minuteTolerance) || 10; //10 minutes tolerance by default
         var sortBy = (req.query.sortBy && (req.query.sortBy.toUpperCase() == 'DESC')) ? "-" : "";
         var orderBy = sortBy + (req.query.orderBy || 'tripDate');
         var itemsPerPage = Number(req.query.itemsPerPage) || 20;
-        var page = Number(req.query.page) || 1;
+        var page = req.query.page ? Number(req.query.page) : 1;
 
         var query = Trip.find();
 
@@ -137,9 +137,12 @@ router.route('/')
             .populate('pendingPassengers')
             .populate('passengers');
 
-        query.skip((page * itemsPerPage) - itemsPerPage)
-            .limit(itemsPerPage)
-            .sort(orderBy)
+        if (page != 0) {
+            query.skip((page * itemsPerPage) - itemsPerPage)
+                .limit(itemsPerPage)
+        }
+
+        query.sort(orderBy)
             .exec(function (err, trips) {
                 if (err) {
                     //Log DB errors.
@@ -568,84 +571,86 @@ router.patch('/:id_trip/cancel_reservation', verifyToken, (req, res) => {
             return res.status(404).json({ message: "This user does not exist." });
         }
 
-    });
+        Trip.findById(req.params.id_trip).populate('driver').exec(function (err, trip) {
 
-    Trip.findById(req.params.id_trip).exec(function (err, trip) {
+            if (err) {
+                //Log DB errors.
+                console.log(err);
+                return res.status(503).json(err);
+            }
 
-        if (err) {
-            //Log DB errors.
-            console.log(err);
-            return res.status(503).json(err);
-        }
-
-        if (!trip) {
-            return res.status(404).json({ message: "Trip not found." });
-        }
+            if (!trip) {
+                return res.status(404).json({ message: "Trip not found." });
+            }
 
 
-        var indexPending = trip.pendingPassengers.indexOf(req.body.passengerId);
-        var indexPassengers = trip.passengers.indexOf(req.body.passengerId);
+            var indexPending = trip.pendingPassengers.indexOf(req.body.passengerId);
+            var indexPassengers = trip.passengers.indexOf(req.body.passengerId);
 
 
-        if (indexPassengers > -1) {
-            trip.passengers.splice(indexPassengers, 1);
+            if (indexPassengers > -1) {
+                trip.passengers.splice(indexPassengers, 1);
+                trip.numberOfSeatsAvailable++;
+                trip.save()
+                    .then(function (tripSaved) {
 
-            trip.save()
-                .then(function (tripSaved) {
+                        Notification.createNotification(trip.driver.id, req.body.passengerId, trip.id, notificationTypes.PASSENGER_CANCELED)
+                            .then(function (notification) {
 
-                    Notification.createNotification(trip.driver.id, req.body.passengerId, trip.id, notificationTypes.NEW_PASSENGER)
-                        .then(function (notification) {
-
-                            if (!notification) {
-
-                                return res.status(503).json({ message: 'Database error.' });
-                            }
-
-                        })
-                        .then(function () {
-
-                            tripSaved.populate('passengers pendingPassengers', function (err) {
-
-                                if (err) {
-                                    //Log DB errors.
-                                    console.log(err);
-                                    return res.status(503).json(err);
+                                if (!notification) {
+                                    return res.status(503).json({ message: 'Database error.' });
                                 }
 
-                                res.status(200).json({ message: "Reservation cancelled.", trip: tripSaved });
+                            })
+                            .then(function () {
+
+                                tripSaved.populate('passengers pendingPassengers', function (err) {
+
+                                    if (err) {
+                                        //Log DB errors.
+                                        console.log(err);
+                                        return res.status(503).json(err);
+                                    }
+
+                                    res.status(200).json({ message: "Reservation cancelled.", trip: tripSaved });
+                                });
                             });
-                        });
-                })
+                    })
 
-                .catch(function (err) {
+                    .catch(function (err) {
 
-                    if (err) {
-                        console.log(err);
-                        return res.status(503).json({ message: 'Database error.' });
+                        if (err) {
+                            console.log(err);
+                            return res.status(503).json({ message: 'Database error.' });
 
-                    }
+                        }
 
-                });
+                    });
 
-        }
-        else {
-            if (indexPending > -1) {
-                trip.pendingPassengers.splice(indexPending, 1);
-                trip.save(function (err) {
-                    if (err) {
-                        //Log DB errors.
-                        console.log(err);
-                        return res.status(503).json(err);
-                    }
-                    res.status(200).json({ message: "Reservation cancelled.", trip: trip });
-                });
             }
             else {
-                res.status(409).json({ message: "User did not reserve this trip." });
+                if (indexPending > -1) {
+                    trip.pendingPassengers.splice(indexPending, 1);
+                    trip.numberOfSeatsAvailable++;
+                    trip.save(function (err) {
+                        if (err) {
+                            //Log DB errors.
+                            console.log(err);
+                            return res.status(503).json(err);
+                        }
+                        res.status(200).json({ message: "Reservation cancelled.", trip: trip });
+                    });
+                }
+                else {
+                    res.status(409).json({ message: "User did not reserve this trip." });
+                }
             }
-        }
+
+        });
 
     });
+
+
 
 });
 
@@ -850,6 +855,47 @@ router.route('/:id_trip/users/:id_userTo/notify')
                 });
         });
     });
+
+router.patch('/:id_trip', [verifyToken, Trip.postMiddleware], function (req, res) {
+
+    Trip.findById(req.params.id_trip, function (err, trip) {
+
+        if (err) {
+            console.log(err);
+            return res.status(503).json(err);
+        }
+
+        if (!trip) {
+            return res.status(404).json({ message: "This trip was not found." });
+        }
+
+        if (req.token_user_id != trip.driver) {
+            return res.status(403).json({ message: "You are not the driver of this trip." });
+        }
+
+        if (req.body.numberOfSeatsAvailable && (trip.passengers.length > req.body.numberOfSeatsAvailable)) {
+            return res.status(400).json({ message: "This would make us kick out a passenger randomly, if this trip is no longer possible, just cancel this one and create other." });
+        }
+
+        trip.set(req.body);
+
+        trip.save(function (err) {
+            if (err) {
+                console.log(err);
+                return res.status(503).json(err);
+            }
+
+            trip.passengers.forEach(function (passengerId) {
+                Notification.createNotification(passengerId, trip.driver, trip.id, notificationTypes.TRIP_EDITED);
+            });
+
+            return res.status(200).json({ trip: trip });
+
+        });
+
+    })
+
+})
 
 
 
