@@ -893,6 +893,34 @@ router.patch('/:id_trip', [verifyToken, Trip.postMiddleware], function (req, res
 
         });
 
+    });
+
+});
+
+router.get('/:id_trip/rates', verifyToken, function (req, res) {
+    
+    Trip.findById(req.params.id_trip, function (err, trip) {
+        
+        if (err) {
+            console.log(err);
+            return res.status(500).json(err);
+        }
+
+        if (!trip) {
+            return res.status(404).json({message : 'This trip was not found'});
+        }
+
+        Rate.find({trip : trip.id}, function (err, rates) {
+            
+            if (err) {
+                console.log(err);
+                return res.status(500).json(err);
+            }
+
+            return res.status(200).json(rates);
+
+        });
+
     })
 
 })
