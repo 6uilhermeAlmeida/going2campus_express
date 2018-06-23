@@ -7,7 +7,7 @@ var sha256 = require('js-sha256');
 var mailer = require('nodemailer');
 var Mustache = require('mustache');
 var fs = require('fs');
-
+var path = require("path");
 
 
 var router = express.Router();
@@ -165,8 +165,8 @@ router.get('/verify/:id_user/:verification_code', function (req, res) {
                         message: "Database error, could not save user."
                     });
                 }
-
-                return res.status(200).json({ message: "You are now active, enjoy!" });
+                return res.sendFile(path.join(__dirname, '../config', 'validated.html'));
+                //return res.status(200).json({ message: "You are now active, enjoy!" });
 
             });
 
