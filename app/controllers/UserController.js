@@ -426,7 +426,14 @@ router.get('/me/notifications', verifyToken, function (req, res) {
 
     query = Notification.find()
         .where('toUser').equals(req.token_user_id)
-        .populate('trip')
+        .populate({
+            path: 'trip',
+            populate :[
+                { path: 'driver'},
+                { path: 'passengers'},
+                { path: 'pendingPassengers'}
+            ]
+        })
         .populate('fromUser');
 
     if (!showAll) {
