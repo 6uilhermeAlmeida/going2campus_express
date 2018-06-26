@@ -1,5 +1,5 @@
 FORMAT: 1A
-HOST : 194.210.216.191/api
+HOST : carpooling.ipleiria.pt/api
 
 # Going2Campus API documentation
 
@@ -10,7 +10,7 @@ This is the documentation for our car-sharing API, Going2Campus.
 ## User Collection [/users]
 
 
-### Get All Users [GET]
+### Get All Users [GET /users]
 + Request 
 
     + Headers 
@@ -31,7 +31,7 @@ This is the documentation for our car-sharing API, Going2Campus.
                 "message" : "#Error#"
             }
             
-### Get Me [GET /me]
+### Get Me [GET /users/me]
 + Request 
 
     + Headers 
@@ -52,6 +52,29 @@ This is the documentation for our car-sharing API, Going2Campus.
                 "message" : "There was a problem finding the user."
             }
             
+### Get My Notifications [GET /users/me/notifications]
++ Request 
+
+    + Headers 
+    
+            x-access-token: 123token123
+          
++ Response 200 (application/json)
+    + Attributes 
+        
+        + Attributes (array[Notification])
+    
++ Response 503 (application/json)
+
+    + Attributes 
+        +message (string)
+        
+    + Body
+
+            {
+                "message" : "#Error#"
+            }
+            
 + Response 404 (application/json)
 
     + Attributes 
@@ -62,8 +85,48 @@ This is the documentation for our car-sharing API, Going2Campus.
             {
                 "message" : "No user found"
             }
+            
+### Set Notification Read [PATCH /users/me/notifications/{id_notification}/read]
++ Request
+    + Headers 
+    
+            x-access-token: 123token123
+    
++ Parameter
+    + id_notification: `1` - The id of the notification
+            
+    
++ Response 200 (application/json)
 
-### Delete User [DELETE /{id}]
+    + Attributes (Trip)
+        - message (string)
+
+    + Body
+    
+            {
+                "message": "Notification update successfully."
+            }
+
+### Upload Profile Picture [POST /auth/me/uploadProfilePicture]
++ Request
+
+    + Body
+
+            {
+                "picture": "image"
+            }
++ Response 200 (application/json)
+
+    + Attributes (User)
+        - message   (string)
+        
+    + Body
+
+            {
+                "message": "Image Saved!"
+            }
+
+### Delete User [DELETE /users/{id}]
 + Request 
 
     + Headers 
@@ -105,7 +168,7 @@ This is the documentation for our car-sharing API, Going2Campus.
                 "message" : "User not found."
             }
 
-### Get User trips (as a driver) [GET /{id}/trips/driver]
+### Get User trips (as a driver) [GET /users/{id}/trips/driver]
 + Request 
 
     + Headers 
@@ -139,7 +202,7 @@ This is the documentation for our car-sharing API, Going2Campus.
                 "message" : "#Error#"
             }
             
-### Get User Past trips [GET /{id}/past_trips]
+### Get User Past trips [GET /users/{id}/past_trips]
 + Parameters
     + id
 
@@ -167,7 +230,7 @@ This is the documentation for our car-sharing API, Going2Campus.
                 "message" : "#Error#"
             }
             
-### Get User Future trips [GET /{id}/future_trips]
+### Get User Future trips [GET /users/{id}/future_trips]
 + Parameters
     + id
 
@@ -195,7 +258,7 @@ This is the documentation for our car-sharing API, Going2Campus.
                 "message" : "#Error#"
             }
             
-### Edit User [PATCH /{id}/edit]
+### Edit User [PATCH /users/{id}/edit]
 + Request 
 
     + Headers 
@@ -288,12 +351,61 @@ This is the documentation for our car-sharing API, Going2Campus.
             }
 
 
-### Get All Trips [GET /trips]
+### Get All Trips [GET /trips{?departureAddress,destinationAddress,tripDate,numberOfSeatsAvailable,isFromCampus,departureLatitude,departureLongitude,destinationLatitude,destinationLongitude}]
++ Parameters
+    + departureAddress (optional) - Rua A
+    + destinationAddress (optional)- Rua B
+    + tripDate (optional) - 2018-04-30T22:31:42.357Z
+    + numberOfSeatsAvailable (optional) - 3
+    + isFromCampus (optional) - true
+    + departureLatitude (optional) - 24
+    + departureLongitude (optional) - 15
+    + destinationLatitude (optional) - 25
+    + destinationLongitude (optional) - 15
+    
 + Response 200 (application/json)
     + Attributes
         - trips (array[Trip])
 
+### Edit Trip [PATCH /trips/{id}/edit]
++ Request 
+
+    + Headers 
+    
+            x-access-token: 123token123
+            
++ Parameters
+    + id
+    
++ Attributes (Trip)
+
++ Response 200 (application/json)
+    + Attributes (Trip)
+    
++ Response 503 (application/json)
+
+    + Attributes 
+        + message  (string)
         
+    + Body
+
+            {
+                "message" : "#Error#"
+            }
+
++ Response 403 (application/json)
+
+    + Attributes 
+        +message (string)
+        
+    + Body
+
+            {
+                "message" : "Unauthorized request"
+            }
+            
+
+ 
 ### Add Passenger to Trip [PATCH /trips/{id}/add_passenger]
 + Request
     + Headers 
@@ -712,15 +824,27 @@ This is the documentation for our car-sharing API, Going2Campus.
                 "message": "Reservation cancelled."
                 "trip" : trip
             }
-          
+
+### Get Rates [PATCH /trips/{id}/rates]
++ Request
+    + Headers 
+    
+            x-access-token: 123token123
+    
++ Parameter
+    + id: `1` - The id of the trip
             
+    
++ Response 200 (application/json)
+
+    + Attributes (array[Rate])
 
             
 # Group Auth
 
 ## Auth Collection [/auth]
 
-### Register User [POST /register]
+### Register User [POST /auth/register]
 + Request
 
     + Body
@@ -758,7 +882,7 @@ This is the documentation for our car-sharing API, Going2Campus.
                     }
             }
 
-### Login User [POST /login]
+### Login User [POST /auth/login]
 + Request
 
     + Body
@@ -796,7 +920,42 @@ This is the documentation for our car-sharing API, Going2Campus.
                     "__v": 0
                 }
             }
+
+### Ask for Reset [GET /auth/askForReset{?email}]
++ Parameters
+    - email (optional) - jose.cruzbasso@gmai.com
++ Response 200 (application/json)
+
+    + Attributes
+        - message   (string)
+        
+    + Body
+
+            {
+                "message": "Mail sent with a request confirmation."
+            }
++ Response 404 (application/json)
+
+    + Attributes
+        - message   (string)
+        
+    + Body
+
+            {
+                "message": "Email not found."
+            }
             
++ Response 500 (application/json)
+
+    + Attributes
+        - message   (string)
+        
+    + Body
+
+            {
+                "message": "#Error#"
+            }
+
 # Data Structures
 
 ## User(object)
@@ -825,3 +984,17 @@ This is the documentation for our car-sharing API, Going2Campus.
 - stoppingAddresses: Rua das Portelas, Rua do Campo (array[string]) - Addresses where the trip will stop
 - autoAccept: true (boolean) - Auto accepting any passenger
 - pendingPassengers: Carlos, Miguel (array[User]) - Array of Passengers
+
+## Notification(object)
+- toUser : User
+- fromUser: User
+- trip: Trip
+- type: true (boolean) - Notification type
+- message: "New passenger" (string)
+
+
+## Rate(object)
+- evaluator : User
+- evaluated: User
+- trip: Trip
+- rate: 5 (number)
