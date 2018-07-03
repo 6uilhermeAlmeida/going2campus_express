@@ -33,7 +33,7 @@ router.route('/')
 
     .get(function (req, res) {
 
-        var oneMeterToCoordinates = 0.000009 * 0.001
+        var oneMeterToCoordinates = 0.000009
         var radius = (Number(req.query.radius) || 200) * oneMeterToCoordinates
         var minuteTolerance = Number(req.query.minuteTolerance) || 10; //10 minutes tolerance by default
         var sortBy = (req.query.sortBy && (req.query.sortBy.toUpperCase() == 'DESC')) ? "-" : "";
