@@ -30,7 +30,7 @@ var NotificationSchema = new Schema({
     //Notification type
     type: { type: String, enum: notificationTypes.values , required: [true, "type is required."] },
 
-    //Is the notification read? (at the GET we'll set this to false)
+    //Is the notification read?
     isRead: { type: Boolean, default : false }
 
 

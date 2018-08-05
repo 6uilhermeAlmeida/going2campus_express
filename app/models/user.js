@@ -18,7 +18,7 @@ var UserSchema = new Schema({
     rating: { type: Number, default: 0 , min: 0, max: 5},
     numberOfRates: { type: Number, default: 0 },
     preferences: [String],
-    birthDate: { type: Date, required: [true, 'Birth date is required.'] },
+    birthDate: { type: Date },
     photoUrl: {type:String, default : undefined},
     //cancelIndex: { type: Number, default: 0 },
     //trips: { type: [String], select: false },
